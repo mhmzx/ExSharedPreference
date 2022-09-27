@@ -1,19 +1,5 @@
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-
 plugins {
-    kotlin("jvm") version "1.7.10"
-}
-
-group = "io.github.sgpublic"
-
-dependencies {
-    testImplementation(kotlin("test"))
-}
-
-tasks.test {
-    useJUnitPlatform()
-}
-
-tasks.withType<KotlinCompile> {
-    kotlinOptions.jvmTarget = "11"
+    id("com.android.library") version "7.3.0" apply false
+    id("org.jetbrains.kotlin.android") version "1.7.10" apply false
+    id("com.android.application") version "7.3.0" apply false
 }
