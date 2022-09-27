@@ -40,8 +40,10 @@ private fun applyPublishing(project: Project, type: String) {
                     description.set(projectName)
                     url.set("https://github.com/sgpublic/ExSharedPreference")
                     licenses {
-                        name.set("The Apache License, Version 2.0")
-                        url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
+                        license {
+                            name.set("The Apache License, Version 2.0")
+                            url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
+                        }
                     }
                     issueManagement {
                         system.set("GitHub")
