@@ -17,8 +17,6 @@ java {
 }
 
 dependencies {
-    implementation(project(":annotation"))
-
     val autoServiceVer = "1.0.1"
     implementation("com.google.auto.service:auto-service-annotations:$autoServiceVer")
     kapt("com.google.auto.service:auto-service:$autoServiceVer")

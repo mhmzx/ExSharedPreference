@@ -44,7 +44,8 @@ class ExPreferenceProcessor: AbstractProcessor() {
             return false
         }
         try {
-            val elements: Set<Element> = roundEnvironment.getElementsAnnotatedWith(ExSharedPreference::class.java)
+            val elements: Set<Element> = roundEnvironment.getElementsAnnotatedWith(
+                ExSharedPreference::class.java)
 
             for (element: Element in elements) {
                 if (element !is TypeElement) {

@@ -13,7 +13,6 @@ dependencyResolutionManagement {
     }
 }
 
-include(":annotation")
 include(":compiler")
 include(":runtime")
 include(":demo")
