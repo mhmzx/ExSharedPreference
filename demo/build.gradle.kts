@@ -49,7 +49,7 @@ dependencies {
     androidTestImplementation("androidx.test.espresso:espresso-core:3.4.0")
 
     implementation(project(":runtime"))
-    annotationProcessor(project(":compiler"))
+    kapt(project(":compiler"))
     val lombokVer = "1.18.24"
     compileOnly("org.projectlombok:lombok:$lombokVer")
     annotationProcessor("org.projectlombok:lombok:$lombokVer")

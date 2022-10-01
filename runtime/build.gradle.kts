@@ -7,6 +7,8 @@ plugins {
     id("exsp-android-publish")
 }
 
+
+
 android {
     namespace = "io.github.sgpublic.exsp"
     compileSdk = 33
@@ -33,8 +35,8 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
     }
     kotlinOptions {
         jvmTarget = "1.8"

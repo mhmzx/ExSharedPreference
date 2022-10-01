@@ -1,24 +1,10 @@
 package io.github.sgpublic.exsp.util
 
 import com.squareup.javapoet.ClassName
+import com.squareup.javapoet.ParameterizedTypeName
 import com.squareup.javapoet.TypeName
-import java.lang.Character.isLowerCase
 import java.util.*
-import javax.annotation.processing.ProcessingEnvironment
-import javax.lang.model.element.TypeElement
 import javax.lang.model.element.VariableElement
-import javax.lang.model.type.DeclaredType
-import javax.lang.model.type.TypeMirror
-import javax.lang.model.type.UnknownTypeException
-import kotlin.collections.HashSet
-
-fun ProcessingEnvironment.getType(name: String): DeclaredType {
-    return typeUtils.getDeclaredType(getElement(name))
-}
-
-fun ProcessingEnvironment.getElement(name: String): TypeElement {
-    return elementUtils.getTypeElement(name)
-}
 
 fun HashSet<TypeName>.andBoxed(): HashSet<TypeName> {
     val set = HashSet<TypeName>()
@@ -31,42 +17,33 @@ fun HashSet<TypeName>.andBoxed(): HashSet<TypeName> {
     return this
 }
 
-
-fun HashSet<TypeName>.andKotlin(): HashSet<TypeName> {
-    for (typeName in this) {
-        when (typeName) {
-            ClassName.BOOLEAN -> add(TypeName.get(Boolean::class.java))
-            ClassName.FLOAT -> add(TypeName.get(Float::class.java))
-            ClassName.INT -> add(TypeName.get(Int::class.java))
-            ClassName.LONG -> add(TypeName.get(Long::class.java))
-            StringTypeOrigin -> add(TypeName.get(String::class.java))
-        }
-    }
-    return this
-}
-
 fun HashSet<TypeName>.andString(): HashSet<TypeName> {
     add(StringTypeOrigin)
+    add(StringTypeSetOrigin)
     return this
 }
 
 private val StringTypeOrigin: TypeName = ClassName.get("java.lang", "String")
+private val StringTypeSetOrigin: TypeName = ParameterizedTypeName.get(Set::class.java, String::class.java)
 
 private val BooleanType = hashSetOf(
     ClassName.BOOLEAN
-).andBoxed().andKotlin()
+).andBoxed()
 private val IntType = hashSetOf(
     ClassName.INT
-).andBoxed().andKotlin()
+).andBoxed()
 private val LongType = hashSetOf(
     ClassName.LONG
-).andBoxed().andKotlin()
+).andBoxed()
 private val FloatType = hashSetOf(
     ClassName.FLOAT
-).andBoxed().andKotlin()
+).andBoxed()
 private val StringType = hashSetOf(
     StringTypeOrigin
-).andKotlin()
+)
+private val StringSetType = hashSetOf(
+    StringTypeSetOrigin
+)
 
 
 private val supported = hashSetOf(
@@ -74,7 +51,7 @@ private val supported = hashSetOf(
     ClassName.INT,
     ClassName.LONG,
     ClassName.FLOAT,
-).andBoxed().andString().andKotlin()
+).andBoxed().andString()
 
 fun TypeName.supported(): Boolean {
     return supported.contains(this)
@@ -99,7 +76,7 @@ fun VariableElement.setterName(): String {
 }
 
 enum class SharedPreferenceType {
-    BOOLEAN, INT, LONG, FLOAT, STRING;
+    BOOLEAN, INT, LONG, FLOAT, STRING, STRING_SET;
 
     companion object {
         fun of(type: TypeName): SharedPreferenceType {
@@ -113,6 +90,8 @@ enum class SharedPreferenceType {
                 FLOAT
             } else if (StringType.contains(type)) {
                 STRING
+            } else if (StringSetType.contains(type)) {
+                STRING_SET
             } else {
                 throw Exception("Unsupported type: $type")
             }

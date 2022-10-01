@@ -5,7 +5,7 @@ import android.content.SharedPreferences
 import java.lang.ref.WeakReference
 
 object ExPreference {
-    private var context: WeakReference<Context> = WeakReference(null)
+    private var context: WeakReference<Context>? = WeakReference(null)
 
     @JvmStatic
     fun init(context: Context) {
@@ -14,7 +14,7 @@ object ExPreference {
 
     @JvmStatic
     fun getSharedPreference(name: String, mode: Int): SharedPreferences {
-        return context.get()!!.getSharedPreferences(name, mode)
+        return context?.get()!!.getSharedPreferences(name, mode)
     }
 
     inline fun <reified T> get(): T {

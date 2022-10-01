@@ -6,6 +6,7 @@ import android.widget.EditText
 import android.widget.Switch
 import androidx.appcompat.app.AppCompatActivity
 import io.github.sgpublic.exsp.ExPreference
+import java.text.SimpleDateFormat
 
 class MainActivity : AppCompatActivity() {
     private val test: TestPreference = ExPreference.get()
@@ -13,6 +14,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var mstring: EditText
     private lateinit var minteger: EditText
     private lateinit var mlong: EditText
+    private lateinit var mdate: EditText
     private lateinit var mfloat: EditText
     private lateinit var mbool: Switch
 
@@ -28,6 +30,7 @@ class MainActivity : AppCompatActivity() {
             test.testFloat = mfloat.text.toString().toFloat()
             test.testLong = mlong.text.toString().toLong()
             test.isTestBool = mbool.isChecked
+            test.testDate = SimpleDateFormat("yyyy.MM.dd").parse(mdate.text.toString())
         }
     }
 
@@ -37,6 +40,7 @@ class MainActivity : AppCompatActivity() {
         mlong = findViewById(R.id.mlong)
         mfloat = findViewById(R.id.mfloat)
         mbool = findViewById(R.id.mbool)
+        mdate = findViewById(R.id.mdate)
     }
 
     private fun onViewSetup() {
@@ -45,5 +49,6 @@ class MainActivity : AppCompatActivity() {
         mlong.setText(test.testLong.toString())
         mfloat.setText(test.testFloat.toString())
         mbool.isChecked = test.isTestBool
+        mdate.setText(SimpleDateFormat("yyyy.MM.dd").format(test.testDate))
     }
 }

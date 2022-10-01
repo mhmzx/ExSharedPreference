@@ -51,6 +51,17 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"/>
 
+    <TextView
+        app:layout_constraintTop_toTopOf="parent"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Input a date (yyyy.MM.dd):" />
+
+    <EditText
+        android:id="@+id/mdate"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
     <Switch
         android:id="@+id/mbool"
         android:layout_width="wrap_content"
