@@ -3,8 +3,10 @@ package io.github.sgpublic.exsp.util
 import com.squareup.javapoet.ClassName
 import com.squareup.javapoet.ParameterizedTypeName
 import com.squareup.javapoet.TypeName
+import io.github.sgpublic.exsp.ExPreferenceProcessor
 import java.util.*
 import javax.lang.model.element.VariableElement
+import javax.tools.Diagnostic
 
 fun HashSet<TypeName>.andBoxed(): HashSet<TypeName> {
     val set = HashSet<TypeName>()
@@ -23,8 +25,8 @@ fun HashSet<TypeName>.andString(): HashSet<TypeName> {
     return this
 }
 
-private val StringTypeOrigin: TypeName = ClassName.get("java.lang", "String")
-private val StringTypeSetOrigin: TypeName = ParameterizedTypeName.get(Set::class.java, String::class.java)
+val StringTypeOrigin: ClassName = ClassName.get("java.lang", "String")
+val StringTypeSetOrigin: TypeName = ParameterizedTypeName.get(Set::class.java, String::class.java)
 
 private val BooleanType = hashSetOf(
     ClassName.BOOLEAN
@@ -73,6 +75,23 @@ fun VariableElement.setterName(): String {
         if (it.isLowerCase()) it.titlecase(Locale.ROOT) else it.toString()
     }
     return "set$name"
+}
+
+private val obj = ExPreferenceProcessor.getElement("java.lang.Object")
+private val enu = ExPreferenceProcessor.getElement("java.lang.Enum")
+fun VariableElement.isEnum(): Boolean {
+    var asElement = ExPreferenceProcessor.asElement(asType()) ?: return false
+    while (asElement.superclass != null) {
+        ExPreferenceProcessor.mMessager.printMessage(Diagnostic.Kind.WARNING, "asElement: $asElement")
+        if (asElement == enu) {
+            return true
+        }
+        if (asElement == obj) {
+            break
+        }
+        asElement = ExPreferenceProcessor.asElement(asElement.superclass) ?: break
+    }
+    return false
 }
 
 enum class SharedPreferenceType {

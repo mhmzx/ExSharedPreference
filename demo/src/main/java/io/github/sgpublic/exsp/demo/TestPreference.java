@@ -26,4 +26,11 @@ public class TestPreference {
 
     @ExValue(defVal = "-1")
     private Date testDate;
+
+    @ExValue(defVal = "TYPE_A")
+    private Type testEnum;
+
+    public enum Type {
+        TYPE_A, TYPE_B
+    }
 }

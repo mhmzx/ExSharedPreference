@@ -68,10 +68,25 @@
         android:layout_height="wrap_content"
         android:text="switch to change preference" />
 
+    <RadioGroup
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <RadioButton
+            android:id="@+id/mtypea"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="TYPE_A"/>
+        <RadioButton
+            android:id="@+id/mtypeb"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="TYPE_B"/>
+    </RadioGroup>
+
     <Button
         android:id="@+id/msave"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="save" />
-
 </LinearLayout>

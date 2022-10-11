@@ -10,7 +10,6 @@ import javax.lang.model.element.Modifier
 import javax.lang.model.element.TypeElement
 import javax.lang.model.type.DeclaredType
 import javax.lang.model.type.TypeMirror
-import javax.tools.Diagnostic
 
 object ConverterCompiler {
     private val converters: HashMap<String, TypeElement> = hashMapOf()
@@ -98,13 +97,11 @@ object ConverterCompiler {
 
         val static = CodeBlock.builder()
         for (element: Element in env.getElementsAnnotatedWith(ExConverter::class.java)) {
-            ExPreferenceProcessor.mMessager.printMessage(Diagnostic.Kind.WARNING, "element: ${element.javaClass}")
             if (element !is TypeElement) {
                 continue
             }
             val typeParam = findTargetType(element)
             val name = (typeParam.first.asElement() as TypeElement).qualifiedName.toString()
-            ExPreferenceProcessor.mMessager.printMessage(Diagnostic.Kind.WARNING, "name: $name")
             targets[name] = typeParam.second.asElement() as TypeElement
             converters[name] = element
             static.addStatement("\$T.registry.put(\$T.class, \$T.class)",

@@ -4,16 +4,14 @@ import com.squareup.javapoet.*
 import io.github.sgpublic.exsp.ExPreferenceProcessor
 import io.github.sgpublic.exsp.annotations.ExSharedPreference
 import io.github.sgpublic.exsp.annotations.ExValue
-import io.github.sgpublic.exsp.util.SharedPreferenceType
-import io.github.sgpublic.exsp.util.getterName
-import io.github.sgpublic.exsp.util.setterName
-import io.github.sgpublic.exsp.util.supported
+import io.github.sgpublic.exsp.util.*
 import java.util.*
 import javax.annotation.processing.RoundEnvironment
 import javax.lang.model.element.Element
 import javax.lang.model.element.Modifier
 import javax.lang.model.element.TypeElement
 import javax.lang.model.element.VariableElement
+import javax.tools.Diagnostic
 
 object PreferenceCompiler {
     fun apply(env: RoundEnvironment) {
@@ -87,7 +85,7 @@ object PreferenceCompiler {
             if (field.modifiers.contains(Modifier.FINAL)) {
                 continue
             }
-            val type = ClassName.get(field.asType())
+            val type: TypeName = ClassName.get(field.asType())
 
             val name = field.getAnnotation(ExValue::class.java).key.takeIf { it != "" }
                 ?: field.simpleName.toString().replaceFirstChar {
@@ -109,9 +107,14 @@ object PreferenceCompiler {
 
 
             var convertedType = type
+            ExPreferenceProcessor.mMessager.printMessage(Diagnostic.Kind.WARNING, "field: ${field.asType()}")
             if (type.supported()) {
                 setter.addStatement("\$T converted = value", type)
                 getter.addStatement("\$T origin", type)
+            } else if (field.isEnum()) {
+                convertedType = StringTypeOrigin
+                setter.addStatement("\$T converted = value.name()", convertedType)
+                getter.addStatement("\$T origin", convertedType)
             } else {
                 val convertedElement = ConverterCompiler.getTarget(ExPreferenceProcessor.asElement(field.asType())!!)
                 setter.addStatement("\$T converted = \$T.toPreference(\$T.class, value)",
@@ -120,34 +123,47 @@ object PreferenceCompiler {
                 getter.addStatement("\$T origin", convertedType)
             }
 
-            when (SharedPreferenceType.of(convertedType)) {
-                SharedPreferenceType.BOOLEAN -> {
-                    getter.addStatement("origin = sp.getBoolean($conf, $defVal)")
-                    setter.addStatement("editor.putBoolean($conf, converted)")
+            try {
+                when (SharedPreferenceType.of(convertedType)) {
+                    SharedPreferenceType.BOOLEAN -> {
+                        getter.addStatement("origin = sp.getBoolean($conf, $defVal)")
+                        setter.addStatement("editor.putBoolean($conf, converted)")
+                    }
+                    SharedPreferenceType.INT -> {
+                        getter.addStatement("origin = sp.getInt($conf, $defVal)")
+                        setter.addStatement("editor.putInt($conf, converted)")
+                    }
+                    SharedPreferenceType.LONG -> {
+                        getter.addStatement("origin = sp.getLong($conf, $defVal)")
+                        setter.addStatement("editor.putLong($conf, converted)")
+                    }
+                    SharedPreferenceType.FLOAT -> {
+                        getter.addStatement("origin = sp.getFloat($conf, $defVal)")
+                        setter.addStatement("editor.putFloat($conf, value)")
+                    }
+                    SharedPreferenceType.STRING -> {
+                        getter.addStatement("origin = sp.getString($conf, \"$defVal\")")
+                        setter.addStatement("editor.putString($conf, converted)")
+                    }
+                    SharedPreferenceType.STRING_SET -> {
+                        getter.addStatement("origin = sp.getStringSet($conf, \"$defVal\")")
+                        setter.addStatement("editor.putStringSet($conf, converted)")
+                    }
                 }
-                SharedPreferenceType.INT -> {
-                    getter.addStatement("origin = sp.getInt($conf, $defVal)")
-                    setter.addStatement("editor.putInt($conf, converted)")
-                }
-                SharedPreferenceType.LONG -> {
-                    getter.addStatement("origin = sp.getLong($conf, $defVal)")
-                    setter.addStatement("editor.putLong($conf, converted)")
-                }
-                SharedPreferenceType.FLOAT -> {
-                    getter.addStatement("origin = sp.getFloat($conf, $defVal)")
-                    setter.addStatement("editor.putFloat($conf, value)")
-                }
-                SharedPreferenceType.STRING -> {
-                    getter.addStatement("origin = sp.getString($conf, \"$defVal\")")
-                    setter.addStatement("editor.putString($conf, converted)")
-                }
-                SharedPreferenceType.STRING_SET -> {
-                    getter.addStatement("origin = sp.getStringSet($conf, \"$defVal\")")
-                    setter.addStatement("editor.putStringSet($conf, converted)")
+            } catch (e: Exception) {
+                if (!field.isEnum()) {
+                    throw e
                 }
             }
+
             if (type.supported()) {
                 getter.addStatement("return origin")
+            } else if (field.isEnum()) {
+                getter.beginControlFlow("try")
+                getter.addStatement("return \$T.valueOf(origin)", type)
+                getter.nextControlFlow("catch (\$T ignore)", IllegalArgumentException::class.java)
+                getter.addStatement("return \$T.valueOf(\"$defVal\")", type)
+                getter.endControlFlow()
             } else {
                 getter.addStatement("return \$T.fromPreference(\$T.class, origin)",
                     ExPreferenceProcessor.ExConverters, type)
