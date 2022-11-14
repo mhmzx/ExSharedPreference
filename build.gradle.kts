@@ -1,5 +1,8 @@
 plugins {
-    id("com.android.library") version "7.3.0" apply false
-    id("org.jetbrains.kotlin.android") version "1.7.10" apply false
-    id("com.android.application") version "7.3.0" apply false
+    val androidVer = "7.3.1"
+    id("com.android.library") version androidVer apply false
+    id("com.android.application") version androidVer apply false
+
+    val ktVer = "1.7.21"
+    id("org.jetbrains.kotlin.android") version ktVer apply false
 }

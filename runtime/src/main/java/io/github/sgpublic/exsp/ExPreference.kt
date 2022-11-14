@@ -23,8 +23,9 @@ object ExPreference {
 
     @JvmStatic
     fun <T> get(clazz: Class<T>): T {
-        val target = Class.forName(clazz.name + "_Impl")
+        val target = Class.forName("io.github.sgpublic.exsp.ExPrefs")
         @Suppress("UNCHECKED_CAST")
-        return target.newInstance() as T
+        val result by target.getMethod("get", Class::class.java).invoke(null, clazz) as Lazy<T>
+        return result
     }
 }

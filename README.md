@@ -29,15 +29,15 @@ This is a wrapper library for `SharedPreferences` for Android, based on Lombok (
          id 'io.freefair.lombok' version '5.3.0'
          id 'kotlin-kapt'
      }
-
+     
      kapt {
          keepJavacAnnotationProcessors = true
      }
-
+     
      dependencies {
          implementation "io.github.sgpublic:exsp-runtime:$latest"
          kapt "io.github.sgpublic:exsp-compiler:$latest"
-
+     
          def lombok_ver = "1.18.24"
          compileOnly "org.projectlombok:lombok:$lombok_ver"
          annotationProcessor "org.projectlombok:lombok:$lombok_ver"
@@ -63,18 +63,25 @@ This is a wrapper library for `SharedPreferences` for Android, based on Lombok (
    public class TestPreference {
        @ExValue(defVal = "test")
        private String testString;
-
+   
        @ExValue(defVal = "0")
        private float testFloat;
-
+   
        @ExValue(defVal = "0")
        private int testInt;
-
+   
        @ExValue(defVal = "0")
        private long testLong;
-
+   
        @ExValue(defVal = "false")
        private boolean testBool;
+   
+       @ExValue(defVal = "TYPE_A")
+       private Type testEnum;
+   
+       public enum Type {
+           TYPE_A, TYPE_B;
+       }
    }
    ```
 
@@ -84,7 +91,7 @@ This is a wrapper library for `SharedPreferences` for Android, based on Lombok (
    class App: Application() {
        override fun onCreate() {
            super.onCreate()
-
+   
            ExPreference.init(this)
        }
    }
@@ -108,13 +115,23 @@ This is a wrapper library for `SharedPreferences` for Android, based on Lombok (
      Log.d("TestPreference#testString", test.getTestString());
      ```
 
+7. If you set `isMinifyEnabled = true` in your project, you should add to `proguard-rules.pro`:
+
+   ```
+   -keepclassmembers class io.github.sgpublic.exsp.ExPrefs { public static *** get(***); }
+   ```
+
+    
+
 ## Custom Type
 
 `ExSharedPreference` allows you to save custom types into SharedPreferences, but since SharedPreferences only supports a limited number of types, we use the conversion mechanism to complete this function.
 
+**PS: We've added special support for enum types, so you needn't to add converters for enum types.**
+
 1. Add the required custom types to the class directly.
 
-   **PS: The `defVal` needs to fill in the string of the original type value, not your custom type!**
+   **Note: The `defVal` needs to fill in the string of the original type value, not your custom type!**
 
    ```java
    @Data
@@ -211,4 +228,3 @@ sharedPreference.editor()
 ### @ExConverter
 
 This annotation is used to mark a custom type converter for `ExSharedPreference` processing.
-

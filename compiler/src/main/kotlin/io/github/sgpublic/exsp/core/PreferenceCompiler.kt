@@ -11,24 +11,61 @@ import javax.lang.model.element.Element
 import javax.lang.model.element.Modifier
 import javax.lang.model.element.TypeElement
 import javax.lang.model.element.VariableElement
-import javax.tools.Diagnostic
 
 object PreferenceCompiler {
     fun apply(env: RoundEnvironment) {
+        val any = TypeVariableName.get("?")
+        val anyClass = ParameterizedTypeName.get(ClassName.get(Class::class.java), any)
+        val anyLazy = ParameterizedTypeName.get(ClassName.get(Lazy::class.java), any)
+
+        val prefsName = ClassName.get("io.github.sgpublic.exsp", "ExPrefs")
+        val prefsClazz = TypeSpec.classBuilder(prefsName)
+            .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
+
+        val prefs = FieldSpec.builder(
+            ParameterizedTypeName.get(ClassName.get(Map::class.java), anyClass, anyLazy),
+            "prefs", Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL
+        ).initializer("new \$T<>()", HashMap::class.java).build()
+        prefsClazz.addField(prefs)
+
+        val PrefT = TypeVariableName.get("PrefT")
+        val prefClass = ParameterizedTypeName.get(ClassName.get(Class::class.java), PrefT)
+        val lazyPref = ParameterizedTypeName.get(ClassName.get(Lazy::class.java), PrefT)
+        val clazz = ParameterSpec.builder(prefClass, "clazz").build()
+        MethodSpec.methodBuilder("get")
+            .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
+            .addTypeVariable(PrefT)
+            .addParameter(clazz)
+            .beginControlFlow("if (\$T.\$N.containsKey(\$N))", prefsName, prefs, clazz)
+            .addStatement("return (\$T) \$T.\$N.get(\$N)", lazyPref, prefsName, prefs, clazz)
+            .endControlFlow()
+            .addStatement("throw new \$T(\"Unknown ExPreference type, did you add @ExPreference?\")", IllegalStateException::class.java)
+            .returns(lazyPref)
+            .let {
+                prefsClazz.addMethod(it.build())
+            }
+
+        val static = CodeBlock.builder()
+
         for (element: Element in env.getElementsAnnotatedWith(ExSharedPreference::class.java)) {
             if (element !is TypeElement) {
                 continue
             }
-            applySingle(element)
+            static.addStatement("\$T.\$N.put(\$L)", prefsName, prefs, applySingle(element))
         }
+
+        prefsClazz.addStaticBlock(static.build())
+
+        JavaFile.builder("io.github.sgpublic.exsp", prefsClazz.build())
+            .build().writeTo(ExPreferenceProcessor.mFiler)
     }
 
-    private fun applySingle(element: TypeElement) {
+    private fun applySingle(element: TypeElement): CodeBlock {
         val anno = element.getAnnotation(ExSharedPreference::class.java)
 
         val originType = ClassName.get(element)
         val origin = element.simpleName.toString()
-        val spName = "\"" + anno.name + "\""
+        val spName = "\"${anno.name.takeIf { it.isNotBlank() } ?: element.qualifiedName}\""
 
         val pkg = element.qualifiedName.let {
             val tmp = it.substring(0, it.length - origin.length)
@@ -39,9 +76,11 @@ object PreferenceCompiler {
             }
         }
 
-        val impl = TypeSpec.classBuilder(origin + "_Impl")
+        val implName = "${origin}_Impl"
+        val impl = TypeSpec.classBuilder(implName)
             .superclass(originType)
             .addModifiers(Modifier.PUBLIC)
+        val implType = ClassName.get(pkg, implName)
 
         MethodSpec.methodBuilder("getSharedPreference")
             .addModifiers(Modifier.PRIVATE)
@@ -71,11 +110,6 @@ object PreferenceCompiler {
             .let {
                 impl.addMethod(it.build())
             }
-
-        val save = MethodSpec.methodBuilder("save")
-            .addModifiers(Modifier.PUBLIC)
-            .addParameter(originType, "data")
-            .returns(TypeName.VOID)
 
         for (field: Element in element.enclosedElements) {
             val defVal = field.getAnnotation(ExValue::class.java)?.defVal
@@ -107,7 +141,6 @@ object PreferenceCompiler {
 
 
             var convertedType = type
-            ExPreferenceProcessor.mMessager.printMessage(Diagnostic.Kind.WARNING, "field: ${field.asType()}")
             if (type.supported()) {
                 setter.addStatement("\$T converted = value", type)
                 getter.addStatement("\$T origin", type)
@@ -170,15 +203,26 @@ object PreferenceCompiler {
             }
             setter.addStatement("editor.apply()")
 
-            save.addStatement("${field.setterName()}(data.${field.getterName()}())")
-
             impl.addMethod(getter.build())
             impl.addMethod(setter.build())
         }
 
-        impl.addMethod(save.build())
-
         JavaFile.builder(pkg, impl.build())
             .build().writeTo(ExPreferenceProcessor.mFiler)
+
+        val invoke = MethodSpec.methodBuilder("invoke")
+            .addAnnotation(Override::class.java)
+            .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
+            .addStatement("return new \$T()", implType)
+            .returns(originType)
+            .build()
+        val originFunction0 = ParameterizedTypeName.get(ClassName.get(Function0::class.java), originType)
+        return CodeBlock.of("\$T.class, \$T.lazy(\$L)",
+            originType, ClassName.get("kotlin", "LazyKt"),
+            TypeSpec.anonymousClassBuilder("")
+                .addSuperinterface(originFunction0)
+                .addMethod(invoke)
+                .build()
+        )
     }
 }

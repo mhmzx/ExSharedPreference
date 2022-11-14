@@ -20,14 +20,14 @@ object ConverterCompiler {
             .addModifiers(Modifier.PUBLIC)
 
         val any = TypeVariableName.get("?")
-        val Origin = TypeVariableName.get("Origin")
-        val Target = TypeVariableName.get("Target")
+        val OriginT = TypeVariableName.get("OriginT")
+        val TargetT = TypeVariableName.get("TargetT")
         val anyClass = ParameterizedTypeName.get(ClassName.get(Class::class.java), any)
         val anyConverter = ParameterizedTypeName.get(ClassName.get(Converter::class.java), any, any)
         val extendsConverterClass = ParameterizedTypeName.get(ClassName.get(Class::class.java),
             WildcardTypeName.subtypeOf(ParameterizedTypeName.get(ClassName.get(Converter::class.java), any, any)))
-        val originClass = ParameterizedTypeName.get(ClassName.get(Class::class.java), Origin)
-        val knownConverter = ParameterizedTypeName.get(ClassName.get(Converter::class.java), Origin, Target)
+        val originClass = ParameterizedTypeName.get(ClassName.get(Class::class.java), OriginT)
+        val knownConverter = ParameterizedTypeName.get(ClassName.get(Converter::class.java), OriginT, TargetT)
 
         FieldSpec.builder(
             ParameterizedTypeName.get(ClassName.get(Map::class.java), anyClass, anyConverter),
@@ -43,25 +43,26 @@ object ConverterCompiler {
             impl.addField(it.build())
         }
 
+        val originClazzParam = ParameterSpec.builder(originClass, "clazz").build()
         MethodSpec.methodBuilder("getConverter")
             .addModifiers(Modifier.PRIVATE, Modifier.STATIC)
-            .addTypeVariables(listOf(Origin, Target))
-            .addParameter(ParameterSpec.builder(originClass, "clazz").build())
-            .beginControlFlow("if (!\$T.registry.containsKey(clazz))", ExPreferenceProcessor.ExConverters)
-            .addStatement("throw new \$T(\"Cannot find converter for \" + clazz + \", " +
-                    "have you created its converter and added @ExConverter?\")", IllegalStateException::class.java)
+            .addTypeVariables(listOf(OriginT, TargetT))
+            .addParameter(originClazzParam)
+            .beginControlFlow("if (!\$T.registry.containsKey(\$N))", ExPreferenceProcessor.ExConverters, originClazzParam)
+            .addStatement("throw new \$T(\"Cannot find converter for \" + \$N + \", " +
+                    "have you created its converter and added @ExConverter?\")", IllegalStateException::class.java, originClazzParam)
             .endControlFlow()
-            .beginControlFlow("if (!\$T.converters.containsKey(clazz))", ExPreferenceProcessor.ExConverters)
+            .beginControlFlow("if (!\$T.converters.containsKey(\$N))", ExPreferenceProcessor.ExConverters, originClazzParam)
             .beginControlFlow("try")
-            .addStatement("\$T.converters.put(clazz, \$T.registry.get(clazz).newInstance())",
-                ExPreferenceProcessor.ExConverters, ExPreferenceProcessor.ExConverters)
+            .addStatement("\$T.converters.put(clazz, \$T.registry.get(\$N).newInstance())",
+                ExPreferenceProcessor.ExConverters, ExPreferenceProcessor.ExConverters, originClazzParam)
             .nextControlFlow("catch (IllegalAccessException | InstantiationException e)")
-            .addStatement("throw new \$T(\"Failed to create instance for \" + \$T.registry.get(clazz) + \"!\")",
-                RuntimeException::class.java, ExPreferenceProcessor.ExConverters)
+            .addStatement("throw new \$T(\"Failed to create instance for \" + \$T.registry.get(\$N) + \"!\")",
+                RuntimeException::class.java, ExPreferenceProcessor.ExConverters, originClazzParam)
             .endControlFlow()
             .endControlFlow()
-            .addStatement("return (\$T<\$T, \$T>) \$T.converters.get(clazz)",
-                Converter::class.java, Origin, Target, ExPreferenceProcessor.ExConverters)
+            .addStatement("return (\$T<\$T, \$T>) \$T.converters.get(\$N)",
+                Converter::class.java, OriginT, TargetT, ExPreferenceProcessor.ExConverters, originClazzParam)
             .returns(knownConverter)
             .let {
                 impl.addMethod(it.build())
@@ -69,28 +70,28 @@ object ConverterCompiler {
 
         MethodSpec.methodBuilder("toPreference")
             .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
-            .addTypeVariables(listOf(Origin, Target))
-            .addParameter(ParameterSpec.builder(originClass, "clazz").build())
-            .addParameter(ParameterSpec.builder(Origin, "value").build())
-            .returns(Target)
-            .addStatement("\$T<\$T, \$T> converter = \$T.getConverter(clazz)",
-                Converter::class.java, Origin, Target, ExPreferenceProcessor.ExConverters)
+            .addTypeVariables(listOf(OriginT, TargetT))
+            .addParameter(originClazzParam)
+            .addParameter(ParameterSpec.builder(OriginT, "value").build())
+            .returns(TargetT)
+            .addStatement("\$T<\$T, \$T> converter = \$T.getConverter(\$N)",
+                Converter::class.java, OriginT, TargetT, ExPreferenceProcessor.ExConverters, originClazzParam)
             .addStatement("return converter.toPreference(value)",
-                Converter::class.java, Origin, Target, ExPreferenceProcessor.ExConverters)
+                Converter::class.java, OriginT, TargetT, ExPreferenceProcessor.ExConverters)
             .let {
                 impl.addMethod(it.build())
             }
 
         MethodSpec.methodBuilder("fromPreference")
             .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
-            .addTypeVariables(listOf(Origin, Target))
-            .addParameter(ParameterSpec.builder(originClass, "clazz").build())
-            .addParameter(ParameterSpec.builder(Target, "value").build())
-            .returns(Origin)
-            .addStatement("\$T<\$T, \$T> converter = \$T.getConverter(clazz)",
-                Converter::class.java, Origin, Target, ExPreferenceProcessor.ExConverters)
+            .addTypeVariables(listOf(OriginT, TargetT))
+            .addParameter(originClazzParam)
+            .addParameter(ParameterSpec.builder(TargetT, "value").build())
+            .returns(OriginT)
+            .addStatement("\$T<\$T, \$T> converter = \$T.getConverter(\$N)",
+                Converter::class.java, OriginT, TargetT, ExPreferenceProcessor.ExConverters, originClazzParam)
             .addStatement("return converter.fromPreference(value)",
-                Converter::class.java, Origin, Target, ExPreferenceProcessor.ExConverters)
+                Converter::class.java, OriginT, TargetT, ExPreferenceProcessor.ExConverters)
             .let {
                 impl.addMethod(it.build())
             }

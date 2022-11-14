@@ -82,7 +82,6 @@ private val enu = ExPreferenceProcessor.getElement("java.lang.Enum")
 fun VariableElement.isEnum(): Boolean {
     var asElement = ExPreferenceProcessor.asElement(asType()) ?: return false
     while (asElement.superclass != null) {
-        ExPreferenceProcessor.mMessager.printMessage(Diagnostic.Kind.WARNING, "asElement: $asElement")
         if (asElement == enu) {
             return true
         }
