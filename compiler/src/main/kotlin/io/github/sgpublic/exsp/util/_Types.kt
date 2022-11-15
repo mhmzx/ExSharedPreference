@@ -1,12 +1,10 @@
 package io.github.sgpublic.exsp.util
 
 import com.squareup.javapoet.ClassName
-import com.squareup.javapoet.ParameterizedTypeName
 import com.squareup.javapoet.TypeName
 import io.github.sgpublic.exsp.ExPreferenceProcessor
 import java.util.*
 import javax.lang.model.element.VariableElement
-import javax.tools.Diagnostic
 
 fun HashSet<TypeName>.andBoxed(): HashSet<TypeName> {
     val set = HashSet<TypeName>()
@@ -21,12 +19,10 @@ fun HashSet<TypeName>.andBoxed(): HashSet<TypeName> {
 
 fun HashSet<TypeName>.andString(): HashSet<TypeName> {
     add(StringTypeOrigin)
-    add(StringTypeSetOrigin)
     return this
 }
 
 val StringTypeOrigin: ClassName = ClassName.get("java.lang", "String")
-val StringTypeSetOrigin: TypeName = ParameterizedTypeName.get(Set::class.java, String::class.java)
 
 private val BooleanType = hashSetOf(
     ClassName.BOOLEAN
@@ -42,9 +38,6 @@ private val FloatType = hashSetOf(
 ).andBoxed()
 private val StringType = hashSetOf(
     StringTypeOrigin
-)
-private val StringSetType = hashSetOf(
-    StringTypeSetOrigin
 )
 
 
@@ -94,7 +87,7 @@ fun VariableElement.isEnum(): Boolean {
 }
 
 enum class SharedPreferenceType {
-    BOOLEAN, INT, LONG, FLOAT, STRING, STRING_SET;
+    BOOLEAN, INT, LONG, FLOAT, STRING;
 
     companion object {
         fun of(type: TypeName): SharedPreferenceType {
@@ -108,8 +101,6 @@ enum class SharedPreferenceType {
                 FLOAT
             } else if (StringType.contains(type)) {
                 STRING
-            } else if (StringSetType.contains(type)) {
-                STRING_SET
             } else {
                 throw Exception("Unsupported type: $type")
             }

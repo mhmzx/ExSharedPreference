@@ -2,6 +2,9 @@ package io.github.sgpublic.exsp.core
 
 import com.squareup.javapoet.*
 import io.github.sgpublic.exsp.ExPreferenceProcessor
+import io.github.sgpublic.exsp.ExPreferenceProcessor.Companion.ExPreference
+import io.github.sgpublic.exsp.ExPreferenceProcessor.Companion.SharedPreferenceReference
+import io.github.sgpublic.exsp.ExPreferenceProcessor.Companion.SharedPreferences
 import io.github.sgpublic.exsp.annotations.ExSharedPreference
 import io.github.sgpublic.exsp.annotations.ExValue
 import io.github.sgpublic.exsp.util.*
@@ -65,7 +68,6 @@ object PreferenceCompiler {
 
         val originType = ClassName.get(element)
         val origin = element.simpleName.toString()
-        val spName = "\"${anno.name.takeIf { it.isNotBlank() } ?: element.qualifiedName}\""
 
         val pkg = element.qualifiedName.let {
             val tmp = it.substring(0, it.length - origin.length)
@@ -82,15 +84,12 @@ object PreferenceCompiler {
             .addModifiers(Modifier.PUBLIC)
         val implType = ClassName.get(pkg, implName)
 
-        MethodSpec.methodBuilder("getSharedPreference")
-            .addModifiers(Modifier.PRIVATE)
-            .addStatement("return \$T.getSharedPreference($spName, ${anno.mode})",
-                ExPreferenceProcessor.ExPreference
-            )
-            .returns(ClassName.get(ExPreferenceProcessor.SharedPreferences))
-            .let {
-                impl.addMethod(it.build())
-            }
+        val reference = FieldSpec.builder(SharedPreferenceReference, "SharedPreferenceReference")
+            .addModifiers(Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL)
+            .initializer("\$T.getSharedPreference(\$S, ${anno.mode})", ExPreference,
+                anno.name.takeIf { it.isNotBlank() } ?: element.qualifiedName)
+            .build()
+        impl.addField(reference)
 
         MethodSpec.methodBuilder("hashCode")
             .addModifiers(Modifier.PUBLIC)
@@ -131,13 +130,13 @@ object PreferenceCompiler {
                 .addModifiers(Modifier.PUBLIC)
                 .addAnnotation(Override::class.java)
                 .returns(type)
-            getter.addStatement("SharedPreferences sp = getSharedPreference()")
+            getter.addStatement("\$T sp = \$N.get()", SharedPreferences, reference)
 
             val setter = MethodSpec.methodBuilder(field.setterName())
                 .addModifiers(Modifier.PUBLIC)
                 .addAnnotation(Override::class.java)
                 .addParameter(type, "value")
-                .addStatement("SharedPreferences.Editor editor = getSharedPreference().edit()")
+                .addStatement("SharedPreferences.Editor editor = SharedPreferenceReference.get().edit()")
 
 
             var convertedType = type
@@ -178,10 +177,6 @@ object PreferenceCompiler {
                         getter.addStatement("origin = sp.getString($conf, \"$defVal\")")
                         setter.addStatement("editor.putString($conf, converted)")
                     }
-                    SharedPreferenceType.STRING_SET -> {
-                        getter.addStatement("origin = sp.getStringSet($conf, \"$defVal\")")
-                        setter.addStatement("editor.putStringSet($conf, converted)")
-                    }
                 }
             } catch (e: Exception) {
                 if (!field.isEnum()) {
@@ -202,6 +197,7 @@ object PreferenceCompiler {
                     ExPreferenceProcessor.ExConverters, type)
             }
             setter.addStatement("editor.apply()")
+                .addStatement("SharedPreferenceReference.clear()")
 
             impl.addMethod(getter.build())
             impl.addMethod(setter.build())

@@ -17,6 +17,12 @@ java {
 }
 
 dependencies {
+    val lombokVer = "1.18.24"
+    testCompileOnly("org.projectlombok:lombok:$lombokVer")
+    testAnnotationProcessor("org.projectlombok:lombok:$lombokVer")
+    kapt("org.projectlombok:lombok:$lombokVer")
+    testImplementation("junit:junit:4.13.2")
+
     val autoServiceVer = "1.0.1"
     implementation("com.google.auto.service:auto-service-annotations:$autoServiceVer")
     kapt("com.google.auto.service:auto-service:$autoServiceVer")

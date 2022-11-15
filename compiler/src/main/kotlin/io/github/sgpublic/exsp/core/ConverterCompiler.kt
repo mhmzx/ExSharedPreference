@@ -12,7 +12,6 @@ import javax.lang.model.type.DeclaredType
 import javax.lang.model.type.TypeMirror
 
 object ConverterCompiler {
-    private val converters: HashMap<String, TypeElement> = hashMapOf()
     private val targets: HashMap<String, TypeElement> = hashMapOf()
 
     fun apply(env: RoundEnvironment) {
@@ -23,61 +22,52 @@ object ConverterCompiler {
         val OriginT = TypeVariableName.get("OriginT")
         val TargetT = TypeVariableName.get("TargetT")
         val anyClass = ParameterizedTypeName.get(ClassName.get(Class::class.java), any)
-        val anyConverter = ParameterizedTypeName.get(ClassName.get(Converter::class.java), any, any)
-        val extendsConverterClass = ParameterizedTypeName.get(ClassName.get(Class::class.java),
-            WildcardTypeName.subtypeOf(ParameterizedTypeName.get(ClassName.get(Converter::class.java), any, any)))
         val originClass = ParameterizedTypeName.get(ClassName.get(Class::class.java), OriginT)
+        val anyConverter = ParameterizedTypeName.get(ClassName.get(Converter::class.java), any, any)
         val knownConverter = ParameterizedTypeName.get(ClassName.get(Converter::class.java), OriginT, TargetT)
 
-        FieldSpec.builder(
-            ParameterizedTypeName.get(ClassName.get(Map::class.java), anyClass, anyConverter),
+        val convCollect = FieldSpec.builder(ParameterizedTypeName.get(ClassName.get(Map::class.java),
+            anyClass, ParameterizedTypeName.get(ClassName.get(Lazy::class.java), anyConverter)),
             "converters", Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL
-        ).initializer("new \$T<>()", HashMap::class.java).let {
-            impl.addField(it.build())
-        }
-
-        FieldSpec.builder(
-            ParameterizedTypeName.get(ClassName.get(Map::class.java), anyClass, extendsConverterClass),
-            "registry", Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL
-        ).initializer("new \$T<>()", HashMap::class.java).let {
-            impl.addField(it.build())
-        }
+        ).initializer("new \$T<>()", HashMap::class.java).build()
+        impl.addField(convCollect)
 
         val originClazzParam = ParameterSpec.builder(originClass, "clazz").build()
-        MethodSpec.methodBuilder("getConverter")
+        val getConverter = MethodSpec.methodBuilder("getConverter")
             .addModifiers(Modifier.PRIVATE, Modifier.STATIC)
             .addTypeVariables(listOf(OriginT, TargetT))
             .addParameter(originClazzParam)
-            .beginControlFlow("if (!\$T.registry.containsKey(\$N))", ExPreferenceProcessor.ExConverters, originClazzParam)
-            .addStatement("throw new \$T(\"Cannot find converter for \" + \$N + \", " +
-                    "have you created its converter and added @ExConverter?\")", IllegalStateException::class.java, originClazzParam)
+            .beginControlFlow(
+                "if (!\$T.\$N.containsKey(\$N))",
+                ExPreferenceProcessor.ExConverters, convCollect, originClazzParam
+            )
+            .addStatement(
+                "throw new \$T(\"Cannot find converter for \" + \$N + \", " +
+                        "have you created its converter and added @ExConverter?\")",
+                IllegalStateException::class.java,
+                originClazzParam
+            )
             .endControlFlow()
-            .beginControlFlow("if (!\$T.converters.containsKey(\$N))", ExPreferenceProcessor.ExConverters, originClazzParam)
-            .beginControlFlow("try")
-            .addStatement("\$T.converters.put(clazz, \$T.registry.get(\$N).newInstance())",
-                ExPreferenceProcessor.ExConverters, ExPreferenceProcessor.ExConverters, originClazzParam)
-            .nextControlFlow("catch (IllegalAccessException | InstantiationException e)")
-            .addStatement("throw new \$T(\"Failed to create instance for \" + \$T.registry.get(\$N) + \"!\")",
-                RuntimeException::class.java, ExPreferenceProcessor.ExConverters, originClazzParam)
-            .endControlFlow()
-            .endControlFlow()
-            .addStatement("return (\$T<\$T, \$T>) \$T.converters.get(\$N)",
-                Converter::class.java, OriginT, TargetT, ExPreferenceProcessor.ExConverters, originClazzParam)
+            .addStatement(
+                "return (\$T<\$T, \$T>) \$T.\$N.get(\$N).getValue()",
+                Converter::class.java, OriginT, TargetT,
+                ExPreferenceProcessor.ExConverters, convCollect, originClazzParam
+            )
             .returns(knownConverter)
-            .let {
-                impl.addMethod(it.build())
-            }
+            .build()
+        impl.addMethod(getConverter)
 
+        val value = ParameterSpec.builder(OriginT, "value").build()
+        val name = "converter"
         MethodSpec.methodBuilder("toPreference")
             .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
             .addTypeVariables(listOf(OriginT, TargetT))
             .addParameter(originClazzParam)
-            .addParameter(ParameterSpec.builder(OriginT, "value").build())
+            .addParameter(value)
+            .addStatement("\$T \$N = \$T.\$N(\$N)", knownConverter,
+                name, ExPreferenceProcessor.ExConverters, getConverter, originClazzParam)
+            .addStatement("return \$N.toPreference(\$N)", name, value)
             .returns(TargetT)
-            .addStatement("\$T<\$T, \$T> converter = \$T.getConverter(\$N)",
-                Converter::class.java, OriginT, TargetT, ExPreferenceProcessor.ExConverters, originClazzParam)
-            .addStatement("return converter.toPreference(value)",
-                Converter::class.java, OriginT, TargetT, ExPreferenceProcessor.ExConverters)
             .let {
                 impl.addMethod(it.build())
             }
@@ -88,13 +78,16 @@ object ConverterCompiler {
             .addParameter(originClazzParam)
             .addParameter(ParameterSpec.builder(TargetT, "value").build())
             .returns(OriginT)
-            .addStatement("\$T<\$T, \$T> converter = \$T.getConverter(\$N)",
-                Converter::class.java, OriginT, TargetT, ExPreferenceProcessor.ExConverters, originClazzParam)
+            .addStatement("\$T<\$T, \$T> converter = \$T.\$N(\$N)",
+                Converter::class.java, OriginT, TargetT, ExPreferenceProcessor.ExConverters,
+                getConverter, originClazzParam)
             .addStatement("return converter.fromPreference(value)",
                 Converter::class.java, OriginT, TargetT, ExPreferenceProcessor.ExConverters)
             .let {
                 impl.addMethod(it.build())
             }
+
+        val originFunction0 = ParameterizedTypeName.get(ClassName.get(Function0::class.java), anyConverter)
 
         val static = CodeBlock.builder()
         for (element: Element in env.getElementsAnnotatedWith(ExConverter::class.java)) {
@@ -102,11 +95,22 @@ object ConverterCompiler {
                 continue
             }
             val typeParam = findTargetType(element)
-            val name = (typeParam.first.asElement() as TypeElement).qualifiedName.toString()
-            targets[name] = typeParam.second.asElement() as TypeElement
-            converters[name] = element
-            static.addStatement("\$T.registry.put(\$T.class, \$T.class)",
-                ExPreferenceProcessor.ExConverters, typeParam.first, element)
+            targets[(typeParam.first.asElement() as TypeElement).qualifiedName.toString()] =
+                typeParam.second.asElement() as TypeElement
+
+            val invoke = MethodSpec.methodBuilder("invoke")
+                .addAnnotation(Override::class.java)
+                .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
+                .addStatement("return new \$T()", element)
+                .returns(anyConverter)
+                .build()
+            static.addStatement("\$T.\$N.put(\$T.class, \$T.lazy(\$L))",
+                ExPreferenceProcessor.ExConverters, convCollect, typeParam.first,
+                ClassName.get("kotlin", "LazyKt"),
+                TypeSpec.anonymousClassBuilder("")
+                    .addSuperinterface(originFunction0)
+                    .addMethod(invoke)
+                    .build())
         }
         impl.addStaticBlock(static.build())
 
@@ -126,7 +130,9 @@ object ConverterCompiler {
         var base = element
         while (true) {
             for (mirror: TypeMirror in base.interfaces) {
-                mirror as DeclaredType
+                if (mirror !is DeclaredType) {
+                    continue
+                }
                 val type = ExPreferenceProcessor.asElement(mirror)!!
                 if (ConverterName == type.qualifiedName?.toString()) {
                     return (mirror.typeArguments[0] as DeclaredType) to (mirror.typeArguments[1] as DeclaredType)

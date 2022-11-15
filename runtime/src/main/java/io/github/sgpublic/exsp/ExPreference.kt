@@ -3,6 +3,7 @@ package io.github.sgpublic.exsp
 import android.content.Context
 import android.content.SharedPreferences
 import java.lang.ref.WeakReference
+import kotlin.reflect.KProperty
 
 object ExPreference {
     private var context: WeakReference<Context>? = WeakReference(null)
@@ -13,8 +14,31 @@ object ExPreference {
     }
 
     @JvmStatic
-    fun getSharedPreference(name: String, mode: Int): SharedPreferences {
-        return context?.get()!!.getSharedPreferences(name, mode)
+    fun getSharedPreference(name: String, mode: Int): Reference {
+        return Reference(context?.get()!!, name, mode)
+    }
+
+    class Reference(
+        private val context: Context,
+        private val name: String,
+        private val mode: Int,
+    ) {
+        private var SharedPreferences: SharedPreferences? = null
+        fun get(): SharedPreferences {
+            synchronized(this) {
+                if (SharedPreferences == null) {
+                    SharedPreferences = context.getSharedPreferences(name, mode)
+                }
+                return SharedPreferences!!
+            }
+        }
+        fun clear() {
+            synchronized(this) {
+                if (SharedPreferences != null) {
+                    SharedPreferences = null
+                }
+            }
+        }
     }
 
     inline fun <reified T> get(): T {
@@ -23,9 +47,12 @@ object ExPreference {
 
     @JvmStatic
     fun <T> get(clazz: Class<T>): T {
-        val target = Class.forName("io.github.sgpublic.exsp.ExPrefs")
         @Suppress("UNCHECKED_CAST")
-        val result by target.getMethod("get", Class::class.java).invoke(null, clazz) as Lazy<T>
-        return result
+        return (Class.forName("io.github.sgpublic.exsp.ExPrefs")
+            .getMethod("get", Class::class.java).invoke(null, clazz) as Lazy<T>).value
     }
+}
+
+operator fun ExPreference.Reference.getValue(thisRef: Any?, property: KProperty<*>): SharedPreferences {
+    return this.get()
 }

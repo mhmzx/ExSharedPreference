@@ -21,8 +21,8 @@ class ExPreferenceProcessor: AbstractProcessor() {
         lateinit var ExPreference: TypeElement private set
         lateinit var ExConverters: ClassName private set
 
-        lateinit var Context: DeclaredType private set
         lateinit var SharedPreferences: DeclaredType private set
+        lateinit var SharedPreferenceReference: ClassName private set
 
         private lateinit var processingEnv: ProcessingEnvironment
 
@@ -45,10 +45,10 @@ class ExPreferenceProcessor: AbstractProcessor() {
         ExPreferenceProcessor.processingEnv = processingEnv
         mFiler = processingEnv.filer
         mMessager = processingEnv.messager
-        Context = getType("android.content.Context")
         ExPreference = getElement("io.github.sgpublic.exsp.ExPreference")
         ExConverters = ClassName.get("io.github.sgpublic.exsp", "ExConverters")
         SharedPreferences = getType("android.content.SharedPreferences")
+        SharedPreferenceReference = ClassName.get("io.github.sgpublic.exsp", "ExPreference.Reference")
     }
 
     override fun process(set: Set<TypeElement>, roundEnvironment: RoundEnvironment): Boolean {
