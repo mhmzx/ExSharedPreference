@@ -1,5 +1,7 @@
 # ExSharedPreference
 
+![Maven Central](https://img.shields.io/maven-central/v/io.github.sgpublic/exsp-compiler)
+
 This is a wrapper library for `SharedPreferences` for Android, based on Lombok (with `@Data` annotation), which allows you to manage `SharedPreferences` more elegantly.
 
 ## Quick start
