@@ -136,7 +136,7 @@ object PreferenceCompiler {
                 .addModifiers(Modifier.PUBLIC)
                 .addAnnotation(Override::class.java)
                 .addParameter(type, "value")
-                .addStatement("SharedPreferences.Editor editor = SharedPreferenceReference.get().edit()")
+                .addStatement("SharedPreferences.Editor editor = SharedPreferenceReference.edit()")
 
 
             var convertedType = type
@@ -197,7 +197,6 @@ object PreferenceCompiler {
                     ExPreferenceProcessor.ExConverters, type)
             }
             setter.addStatement("editor.apply()")
-                .addStatement("SharedPreferenceReference.clear()")
 
             impl.addMethod(getter.build())
             impl.addMethod(setter.build())

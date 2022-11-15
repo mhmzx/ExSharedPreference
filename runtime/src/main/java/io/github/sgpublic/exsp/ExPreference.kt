@@ -15,29 +15,36 @@ object ExPreference {
 
     @JvmStatic
     fun getSharedPreference(name: String, mode: Int): Reference {
-        return Reference(context?.get()!!, name, mode)
+        return Reference(requiredContext(), name, mode)
     }
 
-    class Reference(
+    private fun requiredContext() =
+        context?.get() ?: throw IllegalStateException("Context are not initialized, did you call ExPreference.init(context)?")
+
+    class Reference internal constructor(
         private val context: Context,
         private val name: String,
         private val mode: Int,
     ) {
-        private var SharedPreferences: SharedPreferences? = null
+        private var sp: SharedPreferences? = null
         fun get(): SharedPreferences {
-            synchronized(this) {
-                if (SharedPreferences == null) {
-                    SharedPreferences = context.getSharedPreferences(name, mode)
-                }
-                return SharedPreferences!!
+            sp?.let { return it }
+            context.getSharedPreferences(name, mode).let {
+                sp = it
+                it.registerOnSharedPreferenceChangeListener(object :
+                    SharedPreferences.OnSharedPreferenceChangeListener {
+                    override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String) {
+                        it.unregisterOnSharedPreferenceChangeListener(this)
+                        sharedPreferences.registerOnSharedPreferenceChangeListener(this)
+                        sp = sharedPreferences
+                    }
+                })
+                return it
             }
         }
-        fun clear() {
-            synchronized(this) {
-                if (SharedPreferences != null) {
-                    SharedPreferences = null
-                }
-            }
+
+        fun edit(): SharedPreferences.Editor {
+            return get().edit()
         }
     }
 
@@ -54,5 +61,5 @@ object ExPreference {
 }
 
 operator fun ExPreference.Reference.getValue(thisRef: Any?, property: KProperty<*>): SharedPreferences {
-    return this.get()
+    return get()
 }
