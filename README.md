@@ -14,53 +14,39 @@ This is a wrapper library for `SharedPreferences` for Android, based on Lombok (
 
      ```groovy
      dependencies {
+         implementation "io.github.sgpublic:exsp-common:$latest"
          implementation "io.github.sgpublic:exsp-runtime:$latest"
-         annotationProcessor "io.github.sgpublic:exsp-compiler:$latest"
-
-         def lombok_ver = "1.18.24"
-         compileOnly "org.projectlombok:lombok:$lombok_ver"
-         annotationProcessor "org.projectlombok:lombok:$lombok_ver"
+         annotationProcessor "io.github.sgpublic:exsp-compiler-java:$latest"
      }
      ```
-
+     
    + For Kotlin project, see [Lombok compiler plugin | Kotlin (kotlinlang.org)](https://kotlinlang.org/docs/lombok.html#using-with-kapt) for more details.
-
+   
      ```groovy
      plugins {
-         id 'org.jetbrains.kotlin.plugin.lombok' version '1.7.10'
-         id 'io.freefair.lombok' version '5.3.0'
          id 'kotlin-kapt'
      }
      
-     kapt {
-         keepJavacAnnotationProcessors = true
-     }
-     
      dependencies {
+         implementation "io.github.sgpublic:exsp-common:$latest"
          implementation "io.github.sgpublic:exsp-runtime:$latest"
-         kapt "io.github.sgpublic:exsp-compiler:$latest"
-     
-         def lombok_ver = "1.18.24"
-         compileOnly "org.projectlombok:lombok:$lombok_ver"
-         annotationProcessor "org.projectlombok:lombok:$lombok_ver"
+         kapt "io.github.sgpublic:exsp-compiler-kotlin:$latest"
      }
      ```
-
-3. Create a new class for managing `SharedPreferences`, and add `@ExSharedPreference` and `@Data` annotations.
+   
+3. Create a new class for managing `SharedPreferences`, and add `@ExSharedPreference` annotations.
 
    **PS: Whether your project uses `Java` or `Kotlin`, this class must be `Java`!**
 
    ```java
-   @Data
    @ExSharedPreference(name = "test")
    public class TestPreference {
    }
    ```
-
+   
 4. Add member variables to this class and add the `@ExValue` annotation to set the default value.
 
    ```java
-   @Data
    @ExSharedPreference(name = "name_of_shared_preference")
    public class TestPreference {
        @ExValue(defVal = "test")
@@ -86,7 +72,7 @@ This is a wrapper library for `SharedPreferences` for Android, based on Lombok (
        }
    }
    ```
-
+   
 5. Use `ExPreference.init(Context context)` method in `Application` to initialize `Context`.
 
    ```kotlin
