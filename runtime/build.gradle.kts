@@ -7,8 +7,6 @@ plugins {
     id("exsp-android-publish")
 }
 
-
-
 android {
     namespace = "io.github.sgpublic.exsp"
     compileSdk = 33
@@ -44,5 +42,5 @@ android {
 }
 
 dependencies {
-
+    implementation(project(":common"))
 }

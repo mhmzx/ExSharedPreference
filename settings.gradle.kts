@@ -11,10 +11,12 @@ dependencyResolutionManagement {
         google()
         mavenCentral()
     }
+
 }
 
-include(":compiler")
+include(":common")
+include(":compiler-java")
+include(":compiler-kotlin")
 include(":runtime")
 include(":demo")
-
 rootProject.name = "ExSharedPreference"

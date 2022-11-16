@@ -2,9 +2,6 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("kotlin-kapt")
-
-    kotlin("plugin.lombok") version "1.7.10"
-    id("io.freefair.lombok") version "5.3.0"
 }
 
 android {
@@ -36,10 +33,6 @@ android {
     }
 }
 
-kapt {
-    keepJavacAnnotationProcessors = true
-}
-
 dependencies {
     implementation("androidx.core:core-ktx:1.9.0")
     implementation("androidx.appcompat:appcompat:1.5.1")
@@ -50,8 +43,6 @@ dependencies {
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.0")
 
     implementation(project(":runtime"))
-    kapt(project(":compiler"))
-    val lombokVer = "1.18.24"
-    compileOnly("org.projectlombok:lombok:$lombokVer")
-    annotationProcessor("org.projectlombok:lombok:$lombokVer")
+    implementation(project(":common"))
+    kapt(project(":compiler-kotlin"))
 }
