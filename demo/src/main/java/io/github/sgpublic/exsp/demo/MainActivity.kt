@@ -10,8 +10,6 @@ import io.github.sgpublic.exsp.ExPreference
 import java.text.SimpleDateFormat
 
 class MainActivity : AppCompatActivity() {
-    private val test: TestPreference = ExPreference.get()
-
     private lateinit var mstring: EditText
     private lateinit var minteger: EditText
     private lateinit var mlong: EditText
@@ -28,15 +26,15 @@ class MainActivity : AppCompatActivity() {
         onViewSetup()
 
         findViewById<Button>(R.id.msave).setOnClickListener {
-            test.testString = mstring.text.toString()
-            test.testInt = minteger.text.toString().toInt()
-            test.testFloat = mfloat.text.toString().toFloat()
-            test.testLong = mlong.text.toString().toLong()
-            test.isTestBool = mbool.isChecked
-            test.testDate = SimpleDateFormat("yyyy.MM.dd").parse(mdate.text.toString())
+            TestPreference.testString = mstring.text.toString()
+            TestPreference.testInt = minteger.text.toString().toInt()
+            TestPreference.testFloat = mfloat.text.toString().toFloat()
+            TestPreference.testLong = mlong.text.toString().toLong()
+            TestPreference.isTestBool = mbool.isChecked
+            TestPreference.testDate = SimpleDateFormat("yyyy.MM.dd").parse(mdate.text.toString())
             when {
-                mtypea.isChecked -> test.testEnum = TestPreference.Type.TYPE_A
-                mtypeb.isChecked -> test.testEnum = TestPreference.Type.TYPE_B
+                mtypea.isChecked -> TestPreference.testEnum = TestPreference.Type.TYPE_A
+                mtypeb.isChecked -> TestPreference.testEnum = TestPreference.Type.TYPE_B
             }
         }
     }

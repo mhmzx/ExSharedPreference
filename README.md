@@ -6,7 +6,7 @@ This is a wrapper library for `SharedPreferences` for Android, based on Lombok (
 
 ## Quick start
 
-1. Install the `Lombok` plugin for your Android Studio according to the method provided in this repository: [sgpublic/lombok-plugin-action: A repository for Lombok plugin incompatibility issues with Android Studio. (github.com)](https://github.com/sgpublic/lombok-plugin-action)
+1. Install the `ExSharedPreference` plugin for your Android Studio, It can be obtained in the IDEA plugin marketplace.
 
 2. Add dependencies in `build.gradle`.
 
@@ -20,7 +20,7 @@ This is a wrapper library for `SharedPreferences` for Android, based on Lombok (
      }
      ```
      
-   + For Kotlin project, see [Lombok compiler plugin | Kotlin (kotlinlang.org)](https://kotlinlang.org/docs/lombok.html#using-with-kapt) for more details.
+   + For Kotlin project
    
      ```groovy
      plugins {
@@ -36,42 +36,85 @@ This is a wrapper library for `SharedPreferences` for Android, based on Lombok (
    
 3. Create a new class for managing `SharedPreferences`, and add `@ExSharedPreference` annotations.
 
-   **PS: Whether your project uses `Java` or `Kotlin`, this class must be `Java`!**
+   + Java
 
-   ```java
-   @ExSharedPreference(name = "test")
-   public class TestPreference {
-   }
-   ```
+     ```java
+     @ExSharedPreference(name = "test")
+     public class TestPreference {
+     }
+     ```
+   
+   + Kotlin
+   
+     ```kotlin
+     @ExSharedPreference(name = "test")
+     interface TestPreference {
+     }
+     ```
+   
+     
    
 4. Add member variables to this class and add the `@ExValue` annotation to set the default value.
 
-   ```java
-   @ExSharedPreference(name = "name_of_shared_preference")
-   public class TestPreference {
-       @ExValue(defVal = "test")
-       private String testString;
+   + Java
    
-       @ExValue(defVal = "0")
-       private float testFloat;
+     ```java
+     @ExSharedPreference(name = "name_of_shared_preference")
+     public class TestPreference {
+         @ExValue(defVal = "test")
+         private String testString;
+     
+         @ExValue(defVal = "0")
+         private float testFloat;
+     
+         @ExValue(defVal = "0")
+         private int testInt;
+     
+         @ExValue(defVal = "0")
+         private long testLong;
+     
+         @ExValue(defVal = "false")
+         private boolean testBool;
+     
+         @ExValue(defVal = "TYPE_A")
+         private Type testEnum;
+     
+         public enum Type {
+             TYPE_A, TYPE_B;
+         }
+     }
+     ```
    
-       @ExValue(defVal = "0")
-       private int testInt;
+   + Kotlin
    
-       @ExValue(defVal = "0")
-       private long testLong;
+     ```kotlin
+     @ExSharedPreference(name = "name_of_shared_preference")
+     interface TestPreference {
+         @ExValue(defVal = "test")
+         var testString: String
+     
+         @ExValue(defVal = "0")
+         var testFloat: Float
+     
+         @ExValue(defVal = "0")
+         var testInt: Int
+     
+         @ExValue(defVal = "0")
+         var testLong: Long
+     
+         @ExValue(defVal = "false")
+         var testBool: Boolean
+     
+         @ExValue(defVal = "TYPE_A")
+         var testEnum: Type
+     
+         enum class Type {
+             TYPE_A, TYPE_B;
+         }
+     }
+     ```
    
-       @ExValue(defVal = "false")
-       private boolean testBool;
-   
-       @ExValue(defVal = "TYPE_A")
-       private Type testEnum;
-   
-       public enum Type {
-           TYPE_A, TYPE_B;
-       }
-   }
-   ```
+     
    
 5. Use `ExPreference.init(Context context)` method in `Application` to initialize `Context`.
 
@@ -103,13 +146,7 @@ This is a wrapper library for `SharedPreferences` for Android, based on Lombok (
      Log.d("TestPreference#testString", test.getTestString());
      ```
 
-7. If you set `isMinifyEnabled = true` in your project, you should add to `proguard-rules.pro`:
-
-   ```
-   -keepclassmembers class io.github.sgpublic.exsp.ExPrefs { public static *** get(***); }
-   ```
-
-    
+   
 
 ## Custom Type
 
@@ -122,16 +159,15 @@ This is a wrapper library for `SharedPreferences` for Android, based on Lombok (
    **Note: The `defVal` needs to fill in the string of the original type value, not your custom type!**
 
    ```java
-   @Data
    @ExSharedPreference(name = "name_of_shared_preference")
-   public class TestPreference {
+   interface TestPreference {
        ...
        @ExValue(defVal = "-1")
-       private Date testDate;
+       var testDate: Date
        ...
    }
    ```
-
+   
 2. Create a class that implements the Converter interface and add `@ExConverter` annotation.
 
    ```kotlin
