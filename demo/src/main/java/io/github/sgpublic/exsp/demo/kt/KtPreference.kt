@@ -1,11 +1,11 @@
-package io.github.sgpublic.exsp.demo
+package io.github.sgpublic.exsp.demo.kt
 
 import io.github.sgpublic.exsp.annotations.ExSharedPreference
 import io.github.sgpublic.exsp.annotations.ExValue
 import java.util.*
 
 @ExSharedPreference(name = "name_of_shared_preference")
-interface TestPreference {
+interface KtPreference {
     @ExValue(defVal = "test")
     var testString: String
 
