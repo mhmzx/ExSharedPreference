@@ -130,14 +130,13 @@ object PreferenceCompiler {
                 .addModifiers(Modifier.PUBLIC)
                 .addAnnotation(Override::class.java)
                 .returns(type)
-            getter.addStatement("\$T sp = \$N.get()", SharedPreferences, reference)
+            getter.addStatement("\$T sp = \$N.getValue()", SharedPreferences, reference)
 
             val setter = MethodSpec.methodBuilder(field.setterName())
                 .addModifiers(Modifier.PUBLIC)
                 .addAnnotation(Override::class.java)
                 .addParameter(type, "value")
                 .addStatement("SharedPreferences.Editor editor = SharedPreferenceReference.edit()")
-
 
             var convertedType = type
             if (type.supported()) {

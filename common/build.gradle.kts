@@ -16,10 +16,6 @@ java {
     withSourcesJar()
 }
 
-dependencies {
-
-}
-
 tasks.test {
     useJUnitPlatform()
 }

@@ -1,35 +1,21 @@
 package io.github.sgpublic.exsp
 
 import com.google.auto.service.AutoService
-import io.github.sgpublic.exsp.annotations.ExConverter
-import io.github.sgpublic.exsp.annotations.ExSharedPreference
-import javax.annotation.processing.*
-import javax.lang.model.SourceVersion
-import javax.lang.model.element.TypeElement
+import com.google.devtools.ksp.processing.Resolver
+import com.google.devtools.ksp.processing.SymbolProcessor
+import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
+import com.google.devtools.ksp.processing.SymbolProcessorProvider
+import com.google.devtools.ksp.symbol.KSAnnotated
 
-@AutoService(Processor::class)
-class ExPreferenceProcessor: AbstractProcessor() {
-    @Synchronized
-    override fun init(processingEnv: ProcessingEnvironment) {
-        super.init(processingEnv)
-
+class ExPreferenceProcessor: SymbolProcessor {
+    override fun process(resolver: Resolver): List<KSAnnotated> {
+        return emptyList()
     }
 
-    override fun process(set: Set<TypeElement>, roundEnvironment: RoundEnvironment): Boolean {
-        if (set.isEmpty()) {
-            return false
+    @AutoService(SymbolProcessorProvider::class)
+    class Provider: SymbolProcessorProvider {
+        override fun create(environment: SymbolProcessorEnvironment): SymbolProcessor {
+            return ExPreferenceProcessor()
         }
-        return false
-    }
-
-    override fun getSupportedAnnotationTypes(): MutableSet<String> {
-        return mutableSetOf(
-            ExSharedPreference::class.qualifiedName!!,
-            ExConverter::class.qualifiedName!!,
-        )
-    }
-
-    override fun getSupportedSourceVersion(): SourceVersion {
-        return SourceVersion.RELEASE_11
     }
 }

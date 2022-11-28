@@ -26,6 +26,8 @@ public class JavaActivity extends AppCompatActivity {
         setContentView(ViewBinding().getRoot());
         onViewSetup();
 
+        JavaPreference.getTestDateObserver();
+
         ViewBinding().msave.setOnClickListener((v) -> {
             try {
                 JavaPreference.edit()

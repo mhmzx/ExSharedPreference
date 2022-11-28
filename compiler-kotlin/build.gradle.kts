@@ -23,10 +23,13 @@ dependencies {
     implementation("com.google.auto.service:auto-service-annotations:$autoServiceVer")
     kapt("com.google.auto.service:auto-service:$autoServiceVer")
 
+    implementation(project(":common"))
+
+    // https://kotlinlang.org/docs/ksp-quickstart.html#create-a-processor-of-your-own
+    implementation("com.google.devtools.ksp:symbol-processing-api:1.7.20-1.0.7")
+
     // https://mvnrepository.com/artifact/com.squareup/kotlinpoet
     implementation("com.squareup:kotlinpoet:1.12.0")
-
-    implementation(project(":common"))
 }
 
 tasks.test {

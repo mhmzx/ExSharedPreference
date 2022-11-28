@@ -3,7 +3,6 @@ package io.github.sgpublic.exsp
 import android.content.Context
 import android.content.SharedPreferences
 import java.lang.ref.WeakReference
-import kotlin.reflect.KProperty
 
 object ExPreference {
     private var context: WeakReference<Context>? = WeakReference(null)
@@ -18,34 +17,48 @@ object ExPreference {
         return Reference(requiredContext(), name, mode)
     }
 
-    private fun requiredContext() =
-        context?.get() ?: throw IllegalStateException("Context are not initialized, did you call ExPreference.init(context)?")
+    private fun requiredContext() = context?.get()
+        ?: throw IllegalStateException("Context are not initialized, did you call ExPreference.init(context)?")
 
     class Reference internal constructor(
         private val context: Context,
         private val name: String,
         private val mode: Int,
-    ) {
+    ): SharedPreferences.OnSharedPreferenceChangeListener, Lazy<SharedPreferences> {
         private var sp: SharedPreferences? = null
-        fun get(): SharedPreferences {
+
+        override val value: SharedPreferences get() {
             sp?.let { return it }
-            context.getSharedPreferences(name, mode).let {
-                sp = it
-                it.registerOnSharedPreferenceChangeListener(object :
-                    SharedPreferences.OnSharedPreferenceChangeListener {
-                    override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String) {
-                        it.unregisterOnSharedPreferenceChangeListener(this)
-                        sharedPreferences.registerOnSharedPreferenceChangeListener(this)
-                        sp = sharedPreferences
-                    }
-                })
-                return it
+            synchronized(this) {
+                sp?.let { return it }
+                sp = context.getSharedPreferences(name, mode)
+                return sp!!
             }
         }
 
         fun edit(): SharedPreferences.Editor {
-            return get().edit()
+            return value.edit()
         }
+
+        private var onChange: ((SharedPreferences, String) -> Unit)? = null
+        fun setOnSharedPreferenceChangedListener(onChange: ((SharedPreferences, String) -> Unit)? = null) {
+            if (isInitialized()) {
+                if (onChange == null) {
+                    value.unregisterOnSharedPreferenceChangeListener(this)
+                } else {
+                    this.onChange = onChange
+                }
+            } else {
+                this.onChange = onChange
+                value.registerOnSharedPreferenceChangeListener(this)
+            }
+        }
+
+        override fun onSharedPreferenceChanged(sp: SharedPreferences, key: String) {
+            onChange?.invoke(sp, key)
+        }
+
+        override fun isInitialized(): Boolean = sp != null
     }
 
     inline fun <reified T> get(): T {
@@ -58,8 +71,4 @@ object ExPreference {
         return (Class.forName("io.github.sgpublic.exsp.ExPrefs")
             .getMethod("get", Class::class.java).invoke(null, clazz) as Lazy<T>).value
     }
-}
-
-operator fun ExPreference.Reference.getValue(thisRef: Any?, property: KProperty<*>): SharedPreferences {
-    return get()
 }

@@ -6,7 +6,7 @@ This is a wrapper library for `SharedPreferences` for Android, based on Lombok (
 
 ## Quick start
 
-1. Install the `ExSharedPreference` plugin for your Android Studio, It can be obtained in the IDEA plugin marketplace.
+1. If your project uses Java, you need to install the `ExSharedPreference` plugin for your Android Studio, projects using kotlin do not need to complete this step.
 
 2. Add dependencies in `build.gradle`.
 
@@ -22,15 +22,15 @@ This is a wrapper library for `SharedPreferences` for Android, based on Lombok (
      
    + For Kotlin project
    
-     ```groovy
+     ```kotlin
      plugins {
-         id 'kotlin-kapt'
+         id("com.google.devtools.ksp") version "1.7.20-1.0.7"
      }
      
      dependencies {
-         implementation "io.github.sgpublic:exsp-common:$latest"
-         implementation "io.github.sgpublic:exsp-runtime:$latest"
-         kapt "io.github.sgpublic:exsp-compiler-kotlin:$latest"
+         implementation("io.github.sgpublic:exsp-common:$latest")
+         implementation("io.github.sgpublic:exsp-runtime:$latest")
+         ksp("io.github.sgpublic:exsp-compiler-kotlin:$latest")
      }
      ```
    
@@ -133,26 +133,30 @@ This is a wrapper library for `SharedPreferences` for Android, based on Lombok (
    + Kotlin
 
      ```kotlin
-     val test: TestPreference = ExPreference.get()
-     test.testString = "new string"
-     Log.d("TestPreference#testString", test.testString)
+     TestPreference.testString = "new string"
+     Log.d("TestPreference#testString", TestPreference.testString)
+     TestPreference.testStringObserver.observe(this@AppCompatActivity) {
+         Log.d("TestPreference#testString changed", it)
+     }
      ```
 
    + Java
-
+   
      ```java
-     TestPreference test = ExPreference.get(TestPreference.class);
-     test.setTestString("new string");
-     Log.d("TestPreference#testString", test.getTestString());
+     TestPreference.setTestString("new string");
+     Log.d("TestPreference#testString", TestPreference.getTestString());
+     TestPreference.getTestStringObserver().observe(AppCompatActivity.this, (value) -> {
+         Log.d("TestPreference#testString changed", value)
+     });
      ```
-
+   
    
 
 ## Custom Type
 
-`ExSharedPreference` allows you to save custom types into SharedPreferences, but since SharedPreferences only supports a limited number of types, we use the conversion mechanism to complete this function.
+`ExSharedPreference` allows you to save custom types into SharedPreferences, but since SharedPreferences only supports a limited number of types, we use the `Converter<OriginT, TargetT>` to complete this function.
 
-**PS: We've added special support for enum types, so you needn't to add converters for enum types.**
+**PS: We've added special support for enum types, so you don't need to add converters for enum types.**
 
 1. Add the required custom types to the class directly.
 

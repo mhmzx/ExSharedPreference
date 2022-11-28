@@ -1,7 +1,7 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
-    id("kotlin-kapt")
+    id("com.google.devtools.ksp") version "1.7.20-1.0.7"
 }
 
 android {
@@ -48,5 +48,5 @@ dependencies {
 
     implementation(project(":runtime"))
     implementation(project(":common"))
-    kapt(project(":compiler-kotlin"))
+    ksp(project(":compiler-kotlin"))
 }

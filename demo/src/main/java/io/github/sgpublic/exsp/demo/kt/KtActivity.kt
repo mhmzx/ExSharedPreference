@@ -2,6 +2,7 @@ package io.github.sgpublic.exsp.demo.kt
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.MutableLiveData
 import io.github.sgpublic.exsp.demo.databinding.ActivityMainBinding
 import java.text.SimpleDateFormat
 import java.util.*
@@ -15,6 +16,8 @@ class KtActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(ViewBinding.root)
         onViewSetup()
+
+        MutableLiveData(false).observe()
 
         ViewBinding.msave.setOnClickListener {
             KtPreference.testString = ViewBinding.mstring.text.toString()
