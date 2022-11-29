@@ -2,10 +2,7 @@ package io.github.sgpublic.exsp.demo.kt
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.MutableLiveData
 import io.github.sgpublic.exsp.demo.databinding.ActivityMainBinding
-import java.text.SimpleDateFormat
-import java.util.*
 
 class KtActivity : AppCompatActivity() {
     private val ViewBinding: ActivityMainBinding by lazy {
@@ -17,32 +14,30 @@ class KtActivity : AppCompatActivity() {
         setContentView(ViewBinding.root)
         onViewSetup()
 
-        MutableLiveData(false).observe()
-
         ViewBinding.msave.setOnClickListener {
-            KtPreference.testString = ViewBinding.mstring.text.toString()
-            KtPreference.testInt = ViewBinding.minteger.text.toString().toInt()
-            KtPreference.testFloat = ViewBinding.mfloat.text.toString().toFloat()
-            KtPreference.testLong = ViewBinding.mlong.text.toString().toLong()
-            KtPreference.testBool = ViewBinding.mbool.isChecked
-            KtPreference.testDate = SimpleDateFormat("yyyy.MM.dd", Locale.CHINA).parse(ViewBinding.mdate.text.toString())
-            when {
-                ViewBinding.mtypea.isChecked -> KtPreference.testEnum = KtPreference.Type.TYPE_A
-                ViewBinding.mtypeb.isChecked -> KtPreference.testEnum = KtPreference.Type.TYPE_B
-            }
+//            KtPreference.testString = ViewBinding.mstring.text.toString()
+//            KtPreference.testInt = ViewBinding.minteger.text.toString().toInt()
+//            KtPreference.testFloat = ViewBinding.mfloat.text.toString().toFloat()
+//            KtPreference.testLong = ViewBinding.mlong.text.toString().toLong()
+//            KtPreference.testBool = ViewBinding.mbool.isChecked
+//            KtPreference.testDate = SimpleDateFormat("yyyy.MM.dd", Locale.CHINA).parse(ViewBinding.mdate.text.toString())
+//            when {
+//                ViewBinding.mtypea.isChecked -> KtPreference.testEnum = KtPreference.Type.TYPE_A
+//                ViewBinding.mtypeb.isChecked -> KtPreference.testEnum = KtPreference.Type.TYPE_B
+//            }
         }
     }
 
     private fun onViewSetup() {
-        ViewBinding.mstring.setText(KtPreference.testString)
-        ViewBinding.minteger.setText(KtPreference.testInt.toString())
-        ViewBinding.mlong.setText(KtPreference.testLong.toString())
-        ViewBinding.mfloat.setText(KtPreference.testFloat.toString())
-        ViewBinding.mbool.isChecked = teKtPreferencest.isTestBool
-        ViewBinding.mdate.setText(SimpleDateFormat("yyyy.MM.dd", Locale.CHINA).format(KtPreference.testDate))
-        when (KtPreference.testEnum) {
-            KtPreference.Type.TYPE_A -> ViewBinding.mtypea.isChecked = true
-            KtPreference.Type.TYPE_B -> ViewBinding.mtypeb.isChecked = true
-        }
+//        ViewBinding.mstring.setText(KtPreference.testString)
+//        ViewBinding.minteger.setText(KtPreference.testInt.toString())
+//        ViewBinding.mlong.setText(KtPreference.testLong.toString())
+//        ViewBinding.mfloat.setText(KtPreference.testFloat.toString())
+//        ViewBinding.mbool.isChecked = teKtPreferencest.isTestBool
+//        ViewBinding.mdate.setText(SimpleDateFormat("yyyy.MM.dd", Locale.CHINA).format(KtPreference.testDate))
+//        when (KtPreference.testEnum) {
+//            KtPreference.Type.TYPE_A -> ViewBinding.mtypea.isChecked = true
+//            KtPreference.Type.TYPE_B -> ViewBinding.mtypeb.isChecked = true
+//        }
     }
 }

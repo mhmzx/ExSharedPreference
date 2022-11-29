@@ -2,6 +2,7 @@ package io.github.sgpublic.exsp
 
 import android.content.Context
 import android.content.SharedPreferences
+import io.github.sgpublic.exsp.interfaces.SharedPreferenceListener
 import java.lang.ref.WeakReference
 
 object ExPreference {
@@ -32,6 +33,7 @@ object ExPreference {
             synchronized(this) {
                 sp?.let { return it }
                 sp = context.getSharedPreferences(name, mode)
+                sp?.registerOnSharedPreferenceChangeListener(this)
                 return sp!!
             }
         }
@@ -40,22 +42,13 @@ object ExPreference {
             return value.edit()
         }
 
-        private var onChange: ((SharedPreferences, String) -> Unit)? = null
-        fun setOnSharedPreferenceChangedListener(onChange: ((SharedPreferences, String) -> Unit)? = null) {
-            if (isInitialized()) {
-                if (onChange == null) {
-                    value.unregisterOnSharedPreferenceChangeListener(this)
-                } else {
-                    this.onChange = onChange
-                }
-            } else {
-                this.onChange = onChange
-                value.registerOnSharedPreferenceChangeListener(this)
-            }
+        private var listener: SharedPreferenceListener? = null
+        fun setOnSharedPreferenceChangedListener(listener: SharedPreferenceListener?) {
+            this.listener = listener
         }
 
         override fun onSharedPreferenceChanged(sp: SharedPreferences, key: String) {
-            onChange?.invoke(sp, key)
+            listener?.onChange(key, sp.all[key]!!)
         }
 
         override fun isInitialized(): Boolean = sp != null

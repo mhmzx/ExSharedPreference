@@ -2,6 +2,10 @@ package io.github.sgpublic.exsp
 
 import com.google.auto.service.AutoService
 import com.squareup.javapoet.ClassName
+import com.sun.tools.javac.api.JavacTrees
+import com.sun.tools.javac.processing.JavacProcessingEnvironment
+import com.sun.tools.javac.tree.TreeMaker
+import com.sun.tools.javac.util.Names
 import io.github.sgpublic.exsp.annotations.ExConverter
 import io.github.sgpublic.exsp.annotations.ExSharedPreference
 import io.github.sgpublic.exsp.core.ConverterCompiler
@@ -16,13 +20,26 @@ import javax.tools.Diagnostic
 @AutoService(Processor::class)
 class ExPreferenceProcessor: AbstractProcessor() {
     companion object {
-        lateinit var mFiler: Filer private set
-        lateinit var mMessager: Messager private set
-        lateinit var ExPreference: TypeElement private set
-        lateinit var ExConverters: ClassName private set
+        val mFiler: Filer by lazy { processingEnv.filer }
+        val mMessager: Messager by lazy { processingEnv.messager }
+        val mTrees: JavacTrees by lazy { JavacTrees.instance(processingEnv) }
+        val mTreeMaker: TreeMaker by lazy {
+            TreeMaker.instance((processingEnv as JavacProcessingEnvironment).context)
+        }
+        val mNames: Names by lazy {
+            Names.instance((processingEnv as JavacProcessingEnvironment).context)
+        }
 
-        lateinit var SharedPreferences: DeclaredType private set
-        lateinit var SharedPreferenceReference: ClassName private set
+        val ExPreference: TypeElement by lazy { getElement("io.github.sgpublic.exsp.ExPreference") }
+        val ExConverters: ClassName by lazy { ClassName.get("io.github.sgpublic.exsp", "ExConverters") }
+
+        val SharedPreferences: DeclaredType by lazy { getType("android.content.SharedPreferences") }
+        val OnSharedPreferenceChangeListener: DeclaredType by lazy {
+            getType("android.content.SharedPreferences.OnSharedPreferenceChangeListener")
+        }
+        val SharedPreferenceReference: ClassName by lazy {
+            ClassName.get("io.github.sgpublic.exsp", "ExPreference.Reference")
+        }
 
         private lateinit var processingEnv: ProcessingEnvironment
 
@@ -43,26 +60,18 @@ class ExPreferenceProcessor: AbstractProcessor() {
     override fun init(processingEnv: ProcessingEnvironment) {
         super.init(processingEnv)
         ExPreferenceProcessor.processingEnv = processingEnv
-        mFiler = processingEnv.filer
-        mMessager = processingEnv.messager
-        ExPreference = getElement("io.github.sgpublic.exsp.ExPreference")
-        ExConverters = ClassName.get("io.github.sgpublic.exsp", "ExConverters")
-        SharedPreferences = getType("android.content.SharedPreferences")
-        SharedPreferenceReference = ClassName.get("io.github.sgpublic.exsp", "ExPreference.Reference")
     }
 
     override fun process(set: Set<TypeElement>, roundEnvironment: RoundEnvironment): Boolean {
-        if (set.isEmpty()) {
-            return false
+        if (set.isNotEmpty()) {
+            try {
+                ConverterCompiler.apply(roundEnvironment)
+                PreferenceCompiler.apply(roundEnvironment)
+            } catch (e: Exception) {
+                mMessager.printMessage(Diagnostic.Kind.ERROR, "${e.message}\n${e.stackTraceToString()}")
+            }
         }
-        return try {
-            ConverterCompiler.apply(roundEnvironment)
-            PreferenceCompiler.apply(roundEnvironment)
-            true
-        } catch (e: Exception) {
-            mMessager.printMessage(Diagnostic.Kind.ERROR, "${e.message}\n${e.stackTraceToString()}")
-            false
-        }
+        return false
     }
 
     override fun getSupportedAnnotationTypes(): MutableSet<String> {
