@@ -9,11 +9,12 @@ import com.sun.tools.javac.util.ListBuffer
 import io.github.sgpublic.exsp.ExPreferenceProcessor
 
 fun JCTree.JCClassDecl.addSuperHashCode() {
-    val statements = ListBuffer<JCTree.JCStatement>()
+    val statements = List.nil<JCTree.JCStatement>()
     val hashCode = ExPreferenceProcessor.mTreeMaker.Select(
         ExPreferenceProcessor.mTreeMaker.Ident(
         ExPreferenceProcessor.mNames._super
-    ), ExPreferenceProcessor.mNames.hashCode)
+        ), ExPreferenceProcessor.mNames.hashCode
+    )
     statements.append(
         ExPreferenceProcessor.mTreeMaker.Return(
             ExPreferenceProcessor.mTreeMaker.Apply(
@@ -26,7 +27,7 @@ fun JCTree.JCClassDecl.addSuperHashCode() {
             List.nil(),
             List.nil(),
             List.nil(),
-            ExPreferenceProcessor.mTreeMaker.Block(0, statements.toList()),
+            ExPreferenceProcessor.mTreeMaker.Block(0, statements),
             null
         ))
 }
@@ -54,9 +55,18 @@ fun JCTree.JCClassDecl.addSuperEquals() {
         ))
 }
 
-fun <T: JCTree> List<T>.to(tree: JCClassDecl) {
-    to(tree.defs)
+fun <T: JCTree> List<T>.to(tree: JCClassDecl): List<T> {
+    return to(tree.defs)
 }
-fun <T: JCTree> List<T>.to(tree: List<JCTree>) {
+fun <T: JCTree> List<T>.to(tree: List<JCTree>): List<T> {
     tree.appendList(map { it as JCTree })
+    return this
+}
+
+fun <T: JCTree> T.to(tree: JCClassDecl): T {
+    return to(tree.defs)
+}
+fun <T: JCTree> T.to(tree: List<JCTree>): T {
+    tree.append(this)
+    return this
 }

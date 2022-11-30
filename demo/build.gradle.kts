@@ -49,4 +49,5 @@ dependencies {
     implementation(project(":runtime"))
     implementation(project(":common"))
     ksp(project(":compiler-kotlin"))
+    annotationProcessor(project(":compiler-java"))
 }

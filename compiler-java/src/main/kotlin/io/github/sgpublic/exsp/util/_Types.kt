@@ -2,7 +2,10 @@ package io.github.sgpublic.exsp.util
 
 import com.squareup.javapoet.ClassName
 import com.squareup.javapoet.TypeName
+import com.sun.tools.javac.tree.JCTree.JCExpression
 import io.github.sgpublic.exsp.ExPreferenceProcessor
+import io.github.sgpublic.exsp.ExPreferenceProcessor.Companion.mNames
+import io.github.sgpublic.exsp.ExPreferenceProcessor.Companion.mTreeMaker
 import java.util.*
 import javax.lang.model.element.VariableElement
 
@@ -87,20 +90,42 @@ fun VariableElement.isEnum(): Boolean {
 }
 
 enum class SharedPreferenceType {
-    BOOLEAN, INT, LONG, FLOAT, STRING;
+    Boolean, Int, Long, Float, String;
+
+    fun getStatement(key: JCExpression, defVal: JCExpression): JCExpression {
+        return mTreeMaker.Apply(
+            com.sun.tools.javac.util.List.nil(),
+            mTreeMaker.Select(
+                mTreeMaker.Ident(mNames.fromString("sp")),
+                mNames.fromString("get${name}")
+            ),
+            com.sun.tools.javac.util.List.of(key, defVal)
+        )
+    }
+
+    fun putStatement(key: JCExpression, value: JCExpression): JCExpression {
+        return mTreeMaker.Apply(
+            com.sun.tools.javac.util.List.nil(),
+            mTreeMaker.Select(
+                mTreeMaker.Ident(mNames.fromString("editor")),
+                mNames.fromString("put${name}")
+            ),
+            com.sun.tools.javac.util.List.of(key, value)
+        )
+    }
 
     companion object {
         fun of(type: TypeName): SharedPreferenceType {
             return if (BooleanType.contains(type)) {
-                BOOLEAN
+                Boolean
             } else if (IntType.contains(type)) {
-                INT
+                Int
             } else if (LongType.contains(type)) {
-                LONG
+                Long
             } else if (FloatType.contains(type)) {
-                FLOAT
+                Float
             } else if (StringType.contains(type)) {
-                STRING
+                String
             } else {
                 throw Exception("Unsupported type: $type")
             }

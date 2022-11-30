@@ -22,6 +22,7 @@ class ExPreferenceProcessor: AbstractProcessor() {
     companion object {
         val mFiler: Filer by lazy { processingEnv.filer }
         val mMessager: Messager by lazy { processingEnv.messager }
+
         val mTrees: JavacTrees by lazy { JavacTrees.instance(processingEnv) }
         val mTreeMaker: TreeMaker by lazy {
             TreeMaker.instance((processingEnv as JavacProcessingEnvironment).context)
