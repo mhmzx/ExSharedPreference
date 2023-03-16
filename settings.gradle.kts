@@ -5,13 +5,13 @@ pluginManagement {
         mavenCentral()
     }
 }
+
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
         google()
         mavenCentral()
     }
-
 }
 
 include(":common")
@@ -19,4 +19,4 @@ include(":compiler-java")
 include(":compiler-kotlin")
 include(":runtime")
 include(":demo")
-rootProject.name = "ExSharedPreference"
+rootProject.name = "XXPreference"

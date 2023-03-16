@@ -5,7 +5,7 @@ plugins {
     id("kotlin-kapt")
     id("maven-publish")
     id("signing")
-    id("exsp-java-publish")
+    id("xxpref-java-publish")
 }
 
 java {

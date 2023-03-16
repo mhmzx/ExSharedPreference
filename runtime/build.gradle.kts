@@ -4,11 +4,11 @@ plugins {
 
     id("maven-publish")
     id("signing")
-    id("exsp-android-publish")
+    id("xxpref-android-publish")
 }
 
 android {
-    namespace = "io.github.sgpublic.exsp"
+    namespace = "io.github.sgpublic.xxpref"
     compileSdk = 33
     buildToolsVersion = "33.0.0"
 
@@ -43,11 +43,11 @@ android {
 
 dependencies {
     testImplementation("junit:junit:4.13.2")
-    androidTestImplementation("androidx.test.ext:junit:1.1.4")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.5.0")
+    androidTestImplementation("androidx.test.ext:junit:1.1.5")
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
 
     // https://mvnrepository.com/artifact/androidx.lifecycle/lifecycle-livedata-core
-    api("androidx.lifecycle:lifecycle-livedata-core:2.5.1")
+    api("androidx.lifecycle:lifecycle-livedata-core:2.6.0")
 
     implementation(project(":common"))
 }

@@ -9,6 +9,6 @@ import org.junit.Test;
 public class PrivateClassTest {
     @Test
     public void test() {
-        Exsp.Editor test = Exsp.test();
+        XXPreference.Editor test = XXPreference.test();
     }
 }

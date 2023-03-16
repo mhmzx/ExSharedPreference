@@ -20,4 +20,4 @@
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
 
--keepclassmembers class io.github.sgpublic.exsp.ExPrefs { public static *** get(***); }
+-keepclassmembers class io.github.sgpublic.xxpref.ExPrefs { public static *** get(***); }

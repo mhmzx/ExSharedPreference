@@ -1,6 +1,6 @@
 package io.github.sgpublic.compiler
 
-import io.github.sgpublic.exsp.annotations.ExValue
+import io.github.sgpublic.xxpref.annotations.ExValue
 
 interface TestPreference {
     @ExValue(defVal = "false")
