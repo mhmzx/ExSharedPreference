@@ -9,8 +9,8 @@ plugins {
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
 
     withJavadocJar()
     withSourcesJar()
@@ -32,6 +32,34 @@ tasks.test {
     useJUnitPlatform()
 }
 
+tasks.withType<JavaCompile> {
+    options.compilerArgs = listOf(
+        "--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED",
+        "--add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED",
+        "--add-exports=jdk.compiler/com.sun.tools.javac.main=ALL-UNNAMED",
+        "--add-exports=jdk.compiler/com.sun.tools.javac.model=ALL-UNNAMED",
+        "--add-exports=jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED",
+        "--add-exports=jdk.compiler/com.sun.tools.javac.processing=ALL-UNNAMED",
+        "--add-exports=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED",
+        "--add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED",
+        "--add-opens=jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED",
+        "--add-opens=jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED"
+    )
+//    options.isFork = true
+//    options.forkOptions.jvmArgs = listOf(
+//        "--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED",
+//        "--add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED",
+//        "--add-exports=jdk.compiler/com.sun.tools.javac.main=ALL-UNNAMED",
+//        "--add-exports=jdk.compiler/com.sun.tools.javac.model=ALL-UNNAMED",
+//        "--add-exports=jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED",
+//        "--add-exports=jdk.compiler/com.sun.tools.javac.processing=ALL-UNNAMED",
+//        "--add-exports=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED",
+//        "--add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED",
+//        "--add-opens=jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED",
+//        "--add-opens=jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED"
+//    )
+}
+
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
-    kotlinOptions.jvmTarget = "1.8"
+    kotlinOptions.jvmTarget = "11"
 }

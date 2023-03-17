@@ -1,3 +1,5 @@
+@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
+
 package io.github.sgpublic.xxpref.util
 
 import com.squareup.javapoet.ClassName

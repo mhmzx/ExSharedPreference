@@ -1,3 +1,5 @@
+@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
+
 package io.github.sgpublic.xxpref.jc
 
 import com.sun.tools.javac.tree.JCTree

@@ -1,12 +1,14 @@
+@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
+
 package io.github.sgpublic.xxpref.visitor
 
 import com.squareup.javapoet.ClassName
 import com.sun.tools.javac.code.Flags
-import com.sun.tools.javac.tree.JCTree.*
 import com.sun.tools.javac.util.List
+import com.sun.tools.javac.tree.JCTree.*
 import io.github.sgpublic.xxpref.XXPrefProcessor
-import io.github.sgpublic.xxpref.annotations.ExSharedPreference
-import io.github.sgpublic.xxpref.annotations.ExValue
+import io.github.sgpublic.xxpref.annotations.XXPreference
+import io.github.sgpublic.xxpref.annotations.PrefVal
 import io.github.sgpublic.xxpref.base.SimpleElementVisitor
 import io.github.sgpublic.xxpref.base.SingleElementVisitor
 import io.github.sgpublic.xxpref.core.ConverterCompiler
@@ -29,8 +31,8 @@ object ImportDefVisitor: SimpleElementVisitor<JCImport, ImportDefVisitor.ClassPk
     )
 }
 
-object GetterDefVisitor: SingleElementVisitor<JCMethodDecl, ExValue> {
-    override fun visitVariable(element: VariableElement, param: ExValue): JCMethodDecl {
+object GetterDefVisitor: SingleElementVisitor<JCMethodDecl, PrefVal> {
+    override fun visitVariable(element: VariableElement, param: PrefVal): JCMethodDecl {
         val statement = List.nil<JCStatement>()
 
         // final SharedPreferences sp = this.SpRef.getValue();
@@ -153,8 +155,8 @@ object GetterDefVisitor: SingleElementVisitor<JCMethodDecl, ExValue> {
     }
 }
 
-object SetterDefVisitor: SingleElementVisitor<JCMethodDecl, ExValue> {
-    override fun visitVariable(element: VariableElement, param: ExValue): JCMethodDecl {
+object SetterDefVisitor: SingleElementVisitor<JCMethodDecl, PrefVal> {
+    override fun visitVariable(element: VariableElement, param: PrefVal): JCMethodDecl {
         val statement = List.nil<JCStatement>()
 
         // final SharedPreferences.Editor editor = this.SpRef.edit();
@@ -303,10 +305,10 @@ object EditorDefVisitor: SingleElementVisitor<JCClassDecl, Unit?> {
 
 
 
-object SpRefDefVisitor: SingleElementVisitor<JCVariableDecl, ExSharedPreference> {
+object SpRefDefVisitor: SingleElementVisitor<JCVariableDecl, XXPreference> {
     const val Reference = "SpRef"
 
-    override fun visitType(element: TypeElement, param: ExSharedPreference): JCVariableDecl {
+    override fun visitType(element: TypeElement, param: XXPreference): JCVariableDecl {
         // <name>
         val name = mTreeMaker.Ident(mNames.fromString("\"${param.name}\""))
         // <mode>
@@ -333,8 +335,8 @@ object SpRefDefVisitor: SingleElementVisitor<JCVariableDecl, ExSharedPreference>
     }
 }
 
-object EditorSetterDefVisitor: SingleElementVisitor<JCMethodDecl, ExValue> {
-    override fun visitVariable(element: VariableElement, param: ExValue): JCMethodDecl {
+object EditorSetterDefVisitor: SingleElementVisitor<JCMethodDecl, PrefVal> {
+    override fun visitVariable(element: VariableElement, param: PrefVal): JCMethodDecl {
         val statement = List.nil<JCStatement>()
 
         // final SharedPreferences.Editor editor = this.getEditor();

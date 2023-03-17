@@ -1,9 +1,9 @@
 package io.github.sgpublic.compiler
 
-import io.github.sgpublic.xxpref.annotations.ExValue
+import io.github.sgpublic.xxpref.annotations.PrefVal
 
 interface TestPreference {
-    @ExValue(defVal = "false")
+    @PrefVal(defVal = "false")
     var testBoolean: Boolean
     companion object: TestPreference {
         override var testBoolean: Boolean

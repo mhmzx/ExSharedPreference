@@ -1,8 +1,11 @@
+import org.gradle.internal.impldep.org.eclipse.jgit.lib.ObjectChecker.type
+
 pluginManagement {
     repositories {
         gradlePluginPortal()
         google()
         mavenCentral()
+        maven("https://jitpack.io")
     }
 }
 
@@ -11,6 +14,7 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        maven("https://jitpack.io")
     }
 }
 
@@ -19,4 +23,5 @@ include(":compiler-java")
 include(":compiler-kotlin")
 include(":runtime")
 include(":demo")
+
 rootProject.name = "XXPreference"

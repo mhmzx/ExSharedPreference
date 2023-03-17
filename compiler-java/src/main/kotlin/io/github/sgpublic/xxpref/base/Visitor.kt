@@ -1,6 +1,7 @@
+@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
+
 package io.github.sgpublic.xxpref.base
 
-import com.sun.tools.javac.api.JavacTrees
 import com.sun.tools.javac.tree.JCTree
 import com.sun.tools.javac.tree.TreeMaker
 import com.sun.tools.javac.util.Names
@@ -15,7 +16,6 @@ import javax.lang.model.element.*
 interface BaseElementVisitor<R, P>: ElementVisitor<R, P> {
     val mTreeMaker: TreeMaker get() = XXPrefProcessor.mTreeMaker
     val mNames: Names get() = XXPrefProcessor.mNames
-    val mTrees: JavacTrees get() = XXPrefProcessor.mTrees
 
     override fun visit(element: Element, param: P): R {
         throw UnsupportedOperationException("Unsupported operation: ${javaClass.simpleName}#visit")
@@ -48,8 +48,6 @@ interface BaseElementVisitor<R, P>: ElementVisitor<R, P> {
 
 interface ListElementVisitor<JCTreeT: JCTree, P>: BaseElementVisitor<com.sun.tools.javac.util.List<JCTreeT>, P>
 interface SingleElementVisitor<JCTreeT: JCTree, P>: BaseElementVisitor<JCTreeT, P>
-
-
 interface SimpleElementVisitor<R, P>: BaseElementVisitor<R, P> {
     fun visit(param: P): R
 

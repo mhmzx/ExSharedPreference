@@ -2,7 +2,7 @@ package io.github.sgpublic.xxpref.core
 
 import com.squareup.javapoet.*
 import io.github.sgpublic.xxpref.XXPrefProcessor
-import io.github.sgpublic.xxpref.annotations.ExConverter
+import io.github.sgpublic.xxpref.annotations.PrefConverter
 import io.github.sgpublic.xxpref.interfaces.Converter
 import javax.annotation.processing.RoundEnvironment
 import javax.lang.model.element.Element
@@ -90,7 +90,7 @@ object ConverterCompiler {
         val originFunction0 = ParameterizedTypeName.get(ClassName.get(Function0::class.java), anyConverter)
 
         val static = CodeBlock.builder()
-        for (element: Element in env.getElementsAnnotatedWith(ExConverter::class.java)) {
+        for (element: Element in env.getElementsAnnotatedWith(PrefConverter::class.java)) {
             if (element !is TypeElement) {
                 continue
             }
