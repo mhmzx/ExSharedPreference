@@ -3,9 +3,6 @@
 package io.github.sgpublic.xxpref.base
 
 import com.sun.tools.javac.tree.JCTree
-import com.sun.tools.javac.tree.TreeMaker
-import com.sun.tools.javac.util.Names
-import io.github.sgpublic.xxpref.XXPrefProcessor
 import javax.lang.model.element.*
 
 /**
@@ -14,9 +11,6 @@ import javax.lang.model.element.*
  * @date 2022/11/29 16:59
  */
 interface BaseElementVisitor<R, P>: ElementVisitor<R, P> {
-    val mTreeMaker: TreeMaker get() = XXPrefProcessor.mTreeMaker
-    val mNames: Names get() = XXPrefProcessor.mNames
-
     override fun visit(element: Element, param: P): R {
         throw UnsupportedOperationException("Unsupported operation: ${javaClass.simpleName}#visit")
     }

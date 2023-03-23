@@ -15,11 +15,11 @@ public class SpEditorTest {
     @Test
     public void testEditor() {
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        new Editor(appContext.getSharedPreferences("test", Context.MODE_PRIVATE).edit()).apply();
+        new SpEditor(appContext.getSharedPreferences("test", Context.MODE_PRIVATE).edit()).apply();
     }
 
-    private static class Editor extends SpEditor {
-        private Editor(SharedPreferences.Editor editor) {
+    private static class SpEditor extends PrefEditor {
+        private SpEditor(SharedPreferences.Editor editor) {
             super(editor);
         }
     }

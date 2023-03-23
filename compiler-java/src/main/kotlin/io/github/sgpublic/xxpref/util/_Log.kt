@@ -1,6 +1,7 @@
 package io.github.sgpublic.xxpref.util
 
-import io.github.sgpublic.xxpref.XXPrefProcessor
+import io.github.sgpublic.xxpref.jc.DeclaredTypeImpl
+import io.github.sgpublic.xxpref.jc.mMessager
 import javax.lang.model.element.*
 import javax.lang.model.type.DeclaredType
 import javax.lang.model.type.TypeMirror
@@ -13,7 +14,7 @@ interface Logable: AnnotationMirror, Element {
     }
 
     override fun getAnnotationType(): DeclaredType {
-        return XXPrefProcessor.getType(targetAnnotation.canonicalName)
+        return DeclaredTypeImpl(targetAnnotation.canonicalName)
     }
 
     val targetElement: Element
@@ -60,16 +61,16 @@ interface Logable: AnnotationMirror, Element {
 
 class Logger(private val logable: Logable) {
     fun trace(msg: CharSequence) {
-        XXPrefProcessor.mMessager.printMessage(Diagnostic.Kind.OTHER, msg, logable, logable)
+        mMessager.printMessage(Diagnostic.Kind.OTHER, msg, logable, logable)
     }
     fun info(msg: CharSequence) {
-        XXPrefProcessor.mMessager.printMessage(Diagnostic.Kind.NOTE, msg, logable, logable)
+        mMessager.printMessage(Diagnostic.Kind.NOTE, msg, logable, logable)
     }
     fun warn(msg: CharSequence) {
-        XXPrefProcessor.mMessager.printMessage(Diagnostic.Kind.WARNING, msg, logable, logable)
+        mMessager.printMessage(Diagnostic.Kind.WARNING, msg, logable, logable)
     }
     fun error(msg: CharSequence) {
-        XXPrefProcessor.mMessager.printMessage(Diagnostic.Kind.ERROR, msg, logable, logable)
+        mMessager.printMessage(Diagnostic.Kind.ERROR, msg, logable, logable)
     }
 }
 

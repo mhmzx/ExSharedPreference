@@ -1,9 +1,13 @@
+@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
+
 package io.github.sgpublic.xxpref.core
 
 import com.squareup.javapoet.*
-import io.github.sgpublic.xxpref.XXPrefProcessor
 import io.github.sgpublic.xxpref.annotations.PrefConverter
 import io.github.sgpublic.xxpref.interfaces.Converter
+import io.github.sgpublic.xxpref.jc.TypeElementImpl
+import io.github.sgpublic.xxpref.jc.Types
+import io.github.sgpublic.xxpref.jc.mFiler
 import javax.annotation.processing.RoundEnvironment
 import javax.lang.model.element.Element
 import javax.lang.model.element.Modifier
@@ -15,7 +19,7 @@ object ConverterCompiler {
     private val targets: HashMap<String, TypeElement> = hashMapOf()
 
     fun apply(env: RoundEnvironment) {
-        val impl = TypeSpec.classBuilder("ExConverters")
+        val impl = TypeSpec.classBuilder("Converters")
             .addModifiers(Modifier.PUBLIC)
 
         val any = TypeVariableName.get("?")
@@ -39,7 +43,7 @@ object ConverterCompiler {
             .addParameter(originClazzParam)
             .beginControlFlow(
                 "if (!\$T.\$N.containsKey(\$N))",
-                XXPrefProcessor.ExConverters, convCollect, originClazzParam
+                Types.Converters, convCollect, originClazzParam
             )
             .addStatement(
                 "throw new \$T(\"Cannot find converter for \" + \$N + \", " +
@@ -51,7 +55,7 @@ object ConverterCompiler {
             .addStatement(
                 "return (\$T<\$T, \$T>) \$T.\$N.get(\$N).getValue()",
                 Converter::class.java, OriginT, TargetT,
-                XXPrefProcessor.ExConverters, convCollect, originClazzParam
+                Types.Converters, convCollect, originClazzParam
             )
             .returns(knownConverter)
             .build()
@@ -65,7 +69,7 @@ object ConverterCompiler {
             .addParameter(originClazzParam)
             .addParameter(value)
             .addStatement("\$T \$N = \$T.\$N(\$N)", knownConverter,
-                name, XXPrefProcessor.ExConverters, getConverter, originClazzParam)
+                name, Types.Converters, getConverter, originClazzParam)
             .addStatement("return \$N.toPreference(\$N)", name, value)
             .returns(TargetT)
             .let {
@@ -79,10 +83,10 @@ object ConverterCompiler {
             .addParameter(ParameterSpec.builder(TargetT, "value").build())
             .returns(OriginT)
             .addStatement("\$T<\$T, \$T> converter = \$T.\$N(\$N)",
-                Converter::class.java, OriginT, TargetT, XXPrefProcessor.ExConverters,
+                Converter::class.java, OriginT, TargetT, Types.Converters,
                 getConverter, originClazzParam)
             .addStatement("return converter.fromPreference(value)",
-                Converter::class.java, OriginT, TargetT, XXPrefProcessor.ExConverters)
+                Converter::class.java, OriginT, TargetT, Types.Converters)
             .let {
                 impl.addMethod(it.build())
             }
@@ -105,7 +109,7 @@ object ConverterCompiler {
                 .returns(anyConverter)
                 .build()
             static.addStatement("\$T.\$N.put(\$T.class, \$T.lazy(\$L))",
-                XXPrefProcessor.ExConverters, convCollect, typeParam.first,
+                Types.Converters, convCollect, typeParam.first,
                 ClassName.get("kotlin", "LazyKt"),
                 TypeSpec.anonymousClassBuilder("")
                     .addSuperinterface(originFunction0)
@@ -116,13 +120,13 @@ object ConverterCompiler {
 
         val implObj = impl.build()
         JavaFile.builder("io.github.sgpublic.xxpref", implObj)
-            .build().writeTo(XXPrefProcessor.mFiler)
+            .build().writeTo(mFiler)
     }
 
     fun getTarget(type: TypeElement): TypeElement {
         val name = type.qualifiedName.toString()
         return targets[name] ?: throw IllegalStateException("No converter for $name, " +
-                "have you created its converter and added @ExConverter?")
+                "did you created its converter and added @io.github.sgpublic.xxpref.PrefConverter?")
     }
 
     private val ConverterName: String = Converter::class.qualifiedName!!
@@ -133,12 +137,12 @@ object ConverterCompiler {
                 if (mirror !is DeclaredType) {
                     continue
                 }
-                val type = XXPrefProcessor.asElement(mirror)!!
+                val type = TypeElementImpl(mirror)!!
                 if (ConverterName == type.qualifiedName?.toString()) {
                     return (mirror.typeArguments[0] as DeclaredType) to (mirror.typeArguments[1] as DeclaredType)
                 }
             }
-            base = XXPrefProcessor.asElement(base.superclass) ?: throw IllegalStateException(
+            base = TypeElementImpl(base.superclass) ?: throw IllegalStateException(
                 "Cannot find Converter generic param of ${element.qualifiedName}, " +
                         "you can only use @ExConverter On the subclass of io.github.sgpublic.xxpref.Converter!"
             )

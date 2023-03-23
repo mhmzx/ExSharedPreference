@@ -4,49 +4,31 @@ package io.github.sgpublic.xxpref.visitor
 
 import com.squareup.javapoet.ClassName
 import com.sun.tools.javac.code.Flags
-import com.sun.tools.javac.util.List
 import com.sun.tools.javac.tree.JCTree.*
-import io.github.sgpublic.xxpref.XXPrefProcessor
-import io.github.sgpublic.xxpref.annotations.XXPreference
+import com.sun.tools.javac.util.List
 import io.github.sgpublic.xxpref.annotations.PrefVal
-import io.github.sgpublic.xxpref.base.SimpleElementVisitor
+import io.github.sgpublic.xxpref.annotations.XXPreference
 import io.github.sgpublic.xxpref.base.SingleElementVisitor
 import io.github.sgpublic.xxpref.core.ConverterCompiler
-import io.github.sgpublic.xxpref.jc.Modifiers
+import io.github.sgpublic.xxpref.jc.*
 import io.github.sgpublic.xxpref.util.*
 import javax.lang.model.element.TypeElement
 import javax.lang.model.element.VariableElement
 
-object ImportDefVisitor: SimpleElementVisitor<JCImport, ImportDefVisitor.ClassPkgDef> {
-    override fun visit(param: ClassPkgDef): JCImport {
-        val ident = mTreeMaker.Ident(mNames.fromString(param.packageName))
-        return mTreeMaker.Import(mTreeMaker.Select(
-            ident, mNames.fromString(param.simpleName)
-        ), false)
-    }
-
-    data class ClassPkgDef(
-        val packageName: String,
-        val simpleName: String,
-    )
-}
-
 object GetterDefVisitor: SingleElementVisitor<JCMethodDecl, PrefVal> {
     override fun visitVariable(element: VariableElement, param: PrefVal): JCMethodDecl {
-        val statement = List.nil<JCStatement>()
+        mTreeMaker.at(mTrees.getTree(element).pos)
+        var statement = List.nil<JCStatement>()
 
         // final SharedPreferences sp = this.SpRef.getValue();
+        val SpRef = mTreeMaker.Ident(mNames.fromString(SpRefDefVisitor.Reference))
         val SpRef_Get = mTreeMaker.Select(
-            mTreeMaker.Select(
-                mTreeMaker.Ident(mNames._this),
-                mNames.fromString(SpRefDefVisitor.Reference)
-            ),
-            mNames.fromString("getValue")
+            SpRef, mNames.fromString("getValue")
         )
-        statement.append(mTreeMaker.VarDef(
-            mTreeMaker.Modifiers(Flags.FINAL),
+        statement = statement.append(mTreeMaker.VarDef(
+            mTreeMaker.VarModifiers(Flags.FINAL),
             mNames.fromString("sp"),
-            mTreeMaker.Ident(mNames.fromString("SharedPreferences")),
+            TypeImpl(Types.SharedPreferences),
             mTreeMaker.Apply(List.nil(), SpRef_Get, List.nil())
         ))
 
@@ -56,98 +38,105 @@ object GetterDefVisitor: SingleElementVisitor<JCMethodDecl, PrefVal> {
             conType = StringTypeOrigin
         } else if (!origType.supported()) {
             conType = ClassName.get(ConverterCompiler.getTarget(
-                XXPrefProcessor.asElement(element.asType())!!
+                TypeElementImpl(element.asType())!!
             ))
         }
         val spType = SharedPreferenceType.of(conType)
 
         // <key>
-        val key = mTreeMaker.Ident(mNames.fromString("\"${param.key}\""))
+        val key = mTreeMaker.Literal(param.key)
         // <defVal>
-        val defVal = if (spType == SharedPreferenceType.String) {
-            mTreeMaker.Ident(mNames.fromString("\"${param.defVal}\""))
-        } else {
-            mTreeMaker.Ident(mNames.fromString(param.defVal))
-        }
+        val defVal = mTreeMaker.Literal(param.defVal.let {
+            return@let when {
+                conType.isString -> it
+                conType.isBoolean -> it.toBoolean()
+                conType.isInt -> it.toInt()
+                conType.isLong -> it.toLong()
+                conType.isFloat -> it.toFloat()
+                else -> throw IllegalArgumentException("XXPref Intern error: unknown type of $conType")
+            }
+        })
 
         // final OriginT origin = sp.get[OriginT](<key>, <defVal>);
         val origin = mNames.fromString("origin")
-        statement.append(mTreeMaker.VarDef(
-            mTreeMaker.Modifiers(Flags.FINAL),
+        statement = statement.append(mTreeMaker.VarDef(
+            mTreeMaker.VarModifiers(Flags.FINAL),
             origin,
-            mTreeMaker.Ident(mNames.fromString(
-                element.simpleName.toString()
-            )),
+            TypeImpl(conType),
             spType.getStatement(key, defVal)
         ))
 
         if (origType.supported()) {
             // return origin;
-            statement.append(mTreeMaker.Return(
+            statement = statement.append(mTreeMaker.Return(
                 mTreeMaker.Ident(origin)
             ))
         } else if (element.isEnum()) {
             origType as ClassName
             val valueOf = mTreeMaker.Select(
-                mTreeMaker.Ident(mNames.fromString(origType.simpleName())),
+                TypeImpl(origType),
                 mNames.valueOf
             )
             val valueOfOrigin = mTreeMaker.Apply(
                 List.nil(), valueOf,
                 List.of(mTreeMaker.Ident(origin))
             )
-            val valueOfDef = mTreeMaker.Exec(mTreeMaker.Apply(
+            val valueOfDef = mTreeMaker.Apply(
                 List.nil(), valueOf, List.of(defVal)
-            ))
-
-            element.accept(ImportDefVisitor, ImportDefVisitor.ClassPkgDef(
-                IllegalArgumentException::class.qualifiedName!!,
-                IllegalArgumentException::class.simpleName!!,
-            ))
+            )
 
             // try {
             //     return EnumT.valueOf(origin);
             // } catch (IllegalArgumentException ignore) {
             //     return EnumT.valueOf(<defVal>);
             // }
-            statement.append(mTreeMaker.Try(
+            statement = statement.append(mTreeMaker.Try(
                 mTreeMaker.Block(0, List.of(
-                    mTreeMaker.Exec(valueOfOrigin)
+                    mTreeMaker.Return(valueOfOrigin)
                 )),
                 List.of(mTreeMaker.Catch(
                     mTreeMaker.VarDef(
-                        mTreeMaker.Modifiers(),
+                        mTreeMaker.ParamModifiers(),
                         mNames.fromString("ignore"),
-                        mTreeMaker.Ident(mNames.fromString(IllegalArgumentException::class.simpleName!!)),
+                        TypeImpl(DeclaredTypeImpl(IllegalArgumentException::class.java.name)),
                         null
                     ),
-                    mTreeMaker.Block(0, List.of(valueOfDef))
+                    mTreeMaker.Block(0, List.of(mTreeMaker.Return(valueOfDef)))
                 )),
                 null
             ))
+//            statement = statement.append(mTreeMaker.Return(mTreeMaker.Apply(
+//                List.nil(),
+//                mTreeMaker.Select(
+//                    SpRef, mNames.fromString("getEnum")
+//                ),
+//                List.of(mTreeMaker.Select(
+//                    TypeImpl(origType),
+//                    mNames._class
+//                ), key, defVal)
+//            )))
         } else {
             origType as ClassName
             val originClass = mTreeMaker.Select(
-                mTreeMaker.Ident(mNames.fromString(origType.simpleName())),
+                TypeImpl(element.asType()),
                 mNames._class
             )
 
-            // return ExConverters.fromPreference(OriginT.class, origin);
-            statement.append(mTreeMaker.Return(mTreeMaker.Apply(
+            // return Converters.fromPreference(OriginT.class, origin);
+            statement = statement.append(mTreeMaker.Return(mTreeMaker.Apply(
                 List.nil(),
                 mTreeMaker.Select(
-                    mTreeMaker.Ident(mNames.fromString("ExConverters")),
+                    TypeImpl(Types.Converters),
                     mNames.fromString("fromPreference")
                 ),
                 List.of(originClass, mTreeMaker.Ident(origin))
             )))
         }
 
-
         return mTreeMaker.MethodDef(
-            mTreeMaker.Modifiers(Flags.PUBLIC, Flags.FINAL),
+            mTreeMaker.MethodModifiers(Flags.PUBLIC, Flags.STATIC),
             mNames.fromString(element.getterName()),
-            mTreeMaker.Ident(mNames.fromString(element.simpleName.toString())),
+            TypeImpl(element.asType()),
             List.nil(), List.nil(), List.nil(),
             mTreeMaker.Block(0, statement),
             null,
@@ -157,20 +146,19 @@ object GetterDefVisitor: SingleElementVisitor<JCMethodDecl, PrefVal> {
 
 object SetterDefVisitor: SingleElementVisitor<JCMethodDecl, PrefVal> {
     override fun visitVariable(element: VariableElement, param: PrefVal): JCMethodDecl {
-        val statement = List.nil<JCStatement>()
+        mTreeMaker.at(mTrees.getTree(element).pos)
+        var statement = List.nil<JCStatement>()
 
         // final SharedPreferences.Editor editor = this.SpRef.edit();
         val SpRef_Get = mTreeMaker.Select(
-            mTreeMaker.Select(
-                mTreeMaker.Ident(mNames._this),
-                mNames.fromString(SpRefDefVisitor.Reference)
-            ),
+            mTreeMaker.Ident(mNames.fromString(SpRefDefVisitor.Reference)),
             mNames.fromString("edit")
         )
         val editor = mNames.fromString("editor")
-        statement.append(mTreeMaker.VarDef(
-            mTreeMaker.Modifiers(Flags.FINAL), editor,
-            mTreeMaker.Ident(mNames.fromString("SharedPreferences.Editor")),
+        statement = statement.append(mTreeMaker.VarDef(
+            mTreeMaker.VarModifiers(Flags.FINAL),
+            editor,
+            TypeImpl(Types.SharedPreferencesEditor),
             mTreeMaker.Apply(List.nil(), SpRef_Get, List.nil())
         ))
 
@@ -180,57 +168,51 @@ object SetterDefVisitor: SingleElementVisitor<JCMethodDecl, PrefVal> {
             convType = StringTypeOrigin
         } else if (!origType.supported()) {
             convType = ClassName.get(ConverterCompiler.getTarget(
-                XXPrefProcessor.asElement(element.asType())!!
+                TypeElementImpl(element.asType())!!
             ))
         }
 
         val value = mNames.fromString("value")
 
-
         val spType = SharedPreferenceType.of(convType)
         // <key>
-        val key = mTreeMaker.Ident(mNames.fromString("\"${param.key}\""))
+        val key = mTreeMaker.Literal(param.key)
         if (origType.supported()) {
             // editor.put[ConvT](<key>, <value>);
-            statement.append(mTreeMaker.Exec(
-                spType.putStatement(key, mTreeMaker.Ident(value))
+            statement = statement.append(mTreeMaker.Exec(
+                spType.putStatement(editor, key, mTreeMaker.Ident(value))
             ))
         } else if (element.isEnum()) {
             val name = mTreeMaker.Select(mTreeMaker.Ident(value), mNames._name)
 
-            element.accept(ImportDefVisitor, ImportDefVisitor.ClassPkgDef(
-                IllegalArgumentException::class.qualifiedName!!,
-                IllegalArgumentException::class.simpleName!!,
-            ))
-
             // editor.put[ConvT](<key>, <value>.name());
-            statement.append(mTreeMaker.Exec(
-                spType.putStatement(key, name)
+            statement = statement.append(mTreeMaker.Exec(
+                spType.putStatement(editor, key, mTreeMaker.Apply(List.nil(), name, List.nil()))
             ))
         } else {
             origType as ClassName
             val originClass = mTreeMaker.Select(
-                mTreeMaker.Ident(mNames.fromString(origType.simpleName())),
+                TypeImpl(origType),
                 mNames._class
             )
 
             val fromPref = mTreeMaker.Apply(
                 List.nil(),
                 mTreeMaker.Select(
-                    mTreeMaker.Ident(mNames.fromString("ExConverters")),
+                    TypeImpl(Types.Converters),
                     mNames.fromString("toPreference")
                 ),
                 List.of(originClass, mTreeMaker.Ident(value))
             )
             // editor.put[ConvT](<key>, ExConverters.fromPreference(OriginT.class, origin));
-            statement.append(mTreeMaker.Exec(
-                spType.putStatement(key, fromPref)
+            statement = statement.append(mTreeMaker.Exec(
+                spType.putStatement(editor, key, fromPref)
             ))
         }
 
 
         // editor.apply();
-        statement.append(mTreeMaker.Exec(mTreeMaker.Apply(
+        statement = statement.append(mTreeMaker.Exec(mTreeMaker.Apply(
             List.nil(),
             mTreeMaker.Select(
                 mTreeMaker.Ident(editor),
@@ -240,29 +222,58 @@ object SetterDefVisitor: SingleElementVisitor<JCMethodDecl, PrefVal> {
         )))
 
         return mTreeMaker.MethodDef(
-            mTreeMaker.Modifiers(Flags.PUBLIC, Flags.FINAL),
+            mTreeMaker.MethodModifiers(Flags.PUBLIC, Flags.STATIC),
             mNames.fromString(element.setterName()),
-            mTreeMaker.Ident(mNames.fromString(element.simpleName.toString())),
+            TypeImpl(ClassName.VOID),
             List.nil(),
             List.of(mTreeMaker.VarDef(
-                mTreeMaker.Modifiers(),
+                mTreeMaker.ParamModifiers(),
                 value,
-                mTreeMaker.Ident(mNames.fromString(origType.toString())),
+                TypeImpl(element.asType()),
                 null
             )),
+            List.nil(),
+            mTreeMaker.Block(0, statement),
+            null
+        )
+    }
+}
+
+object EditMethodDefVisitor: SingleElementVisitor<JCMethodDecl, JCClassDecl> {
+    const val Edit = "edit"
+
+    override fun visitType(element: TypeElement, param: JCClassDecl): JCMethodDecl {
+        val statement = List.of(mTreeMaker.Return(mTreeMaker.NewClass(
+            null,
+            List.nil(),
+            TypeImpl(param.name.toString()),
+            List.of(mTreeMaker.Apply(
+                List.nil(),
+                mTreeMaker.Select(
+                    mTreeMaker.Ident(mNames.fromString(SpRefDefVisitor.Reference)),
+                    mNames.fromString("edit")
+                ),
+                List.nil(),
+            )),
+            null
+        )) as JCStatement)
+
+        return mTreeMaker.MethodDef(
+            mTreeMaker.MethodModifiers(Flags.PUBLIC, Flags.STATIC),
+            mNames.fromString(Edit),
+            TypeImpl(param.name.toString()),
+            List.nil(),
+            List.nil(),
             List.nil(),
             mTreeMaker.Block(0, statement),
             null,
         )
     }
-
-
 }
 
-object EditorDefVisitor: SingleElementVisitor<JCClassDecl, Unit?> {
-    const val Editor = "Editor"
-
-    override fun visitType(element: TypeElement, param: Unit?): JCClassDecl {
+object EditorClassDefVisitor: SingleElementVisitor<JCClassDecl, TypeElement> {
+    override fun visitType(element: TypeElement, param: TypeElement): JCClassDecl {
+        mTreeMaker.at(mTrees.getTree(element).pos)
         // <callSuper>:
         // super(editor)
         val callSuper = mTreeMaker.Exec(mTreeMaker.Apply(
@@ -274,12 +285,12 @@ object EditorDefVisitor: SingleElementVisitor<JCClassDecl, Unit?> {
         //     <callSuper>;
         // }
         val constructor = mTreeMaker.MethodDef(
-            mTreeMaker.Modifiers(Flags.PRIVATE),
+            mTreeMaker.MethodModifiers(Flags.PRIVATE),
             mNames.init, null, List.nil(),
             List.of(mTreeMaker.VarDef(
-                mTreeMaker.Modifiers(),
+                mTreeMaker.ParamModifiers(Flags.FINAL),
                 mNames.fromString("editor"),
-                mTreeMaker.Ident(mNames.fromString("SharedPreference.Editor")),
+                TypeImpl(Types.SharedPreferencesEditor),
                 null
             )),
             List.nil(),
@@ -287,17 +298,17 @@ object EditorDefVisitor: SingleElementVisitor<JCClassDecl, Unit?> {
             null
         )
 
-        // public static class SpEditor {
+        // public static class SpEditor extends io.github.sgpublic.xxpref.PrefEditor {
         //     <constructor>
         // }
         val editor = mTreeMaker.ClassDef(
-            mTreeMaker.Modifiers(Flags.PUBLIC, Flags.STATIC),
-            mNames.fromString(Editor), List.nil(),
-            mTreeMaker.Ident(mNames.fromString("SpEditor")),
-            List.nil(), List.nil(),
+            mTreeMaker.ClassModifiers(Flags.PUBLIC, Flags.STATIC),
+            mNames.fromString("SpEditor"),
+            List.nil(),
+            TypeImpl(Types.PrefEditor),
+            List.nil(), List.nil()
         )
-        
-        editor.defs.append(constructor)
+        editor.defs = editor.defs.append(constructor)
 
         return editor
     }
@@ -310,26 +321,26 @@ object SpRefDefVisitor: SingleElementVisitor<JCVariableDecl, XXPreference> {
 
     override fun visitType(element: TypeElement, param: XXPreference): JCVariableDecl {
         // <name>
-        val name = mTreeMaker.Ident(mNames.fromString("\"${param.name}\""))
+        val name = mTreeMaker.Literal(param.name)
         // <mode>
-        val mode = mTreeMaker.Ident(mNames.fromString("${param.mode}"))
+        val mode = mTreeMaker.Literal(param.mode)
 
         // <init>:
-        // ExPreference.getSharedPreference(<name>, <mode>)
+        // XXPref.getSharedPreference(<name>, <mode>)
         val init = mTreeMaker.Apply(
             List.nil(),
             mTreeMaker.Select(
-                mTreeMaker.Ident(mNames.fromString("ExPreference")),
+                TypeImpl(Types.XXPref),
                 mNames.fromString("getSharedPreference")
             ),
             List.of(name, mode)
         )
 
-        // private static final ExPreference.Reference SpRef = <init>;
+        // private static final LazyPrefReference SpRef = <init>;
         return mTreeMaker.VarDef(
-            mTreeMaker.Modifiers(Flags.PRIVATE, Flags.STATIC, Flags.FINAL),
+            mTreeMaker.VarModifiers(Flags.PRIVATE, Flags.STATIC, Flags.FINAL),
             mNames.fromString(Reference),
-            mTreeMaker.Ident(mNames.fromString("ExPreference.Reference")),
+            TypeImpl(Types.LazyPrefReference),
             init
         )
     }
@@ -337,19 +348,21 @@ object SpRefDefVisitor: SingleElementVisitor<JCVariableDecl, XXPreference> {
 
 object EditorSetterDefVisitor: SingleElementVisitor<JCMethodDecl, PrefVal> {
     override fun visitVariable(element: VariableElement, param: PrefVal): JCMethodDecl {
-        val statement = List.nil<JCStatement>()
+        mTreeMaker.at(mTrees.getTree(element).pos)
+        var statement = List.nil<JCStatement>()
 
         // final SharedPreferences.Editor editor = this.getEditor();
-        val getEditor = mTreeMaker.Select(
-            mTreeMaker.Ident(mNames._this),
-            mNames.fromString("getEditor")
-        )
-        val editor = mNames.fromString("editor")
-        statement.append(mTreeMaker.VarDef(
-            mTreeMaker.Modifiers(Flags.FINAL), editor,
-            mTreeMaker.Ident(mNames.fromString("SharedPreferences.Editor")),
-            mTreeMaker.Apply(List.nil(), getEditor, List.nil())
-        ))
+//        val getEditor = mTreeMaker.Select(
+//            mTreeMaker.Ident(mNames._this),
+//            mNames.fromString("getEditor")
+//        )
+//        val editor = mNames.fromString("editor")
+//        statement = statement.append(mTreeMaker.VarDef(
+//            mTreeMaker.ParamModifiers(),
+//            editor,
+//            TypeImpl(Types.SharedPreferencesEditor),
+//            mTreeMaker.Apply(List.nil(), getEditor, List.nil())
+//        ))
 
         val origType = ClassName.get(element.asType())
         var convType = origType
@@ -357,70 +370,77 @@ object EditorSetterDefVisitor: SingleElementVisitor<JCMethodDecl, PrefVal> {
             convType = StringTypeOrigin
         } else if (!origType.supported()) {
             convType = ClassName.get(ConverterCompiler.getTarget(
-                XXPrefProcessor.asElement(element.asType())!!
+                TypeElementImpl(element.asType())!!
             ))
         }
 
-        val value = SetterDefVisitor.mNames.fromString("value")
+        val value = mNames.fromString("value")
 
         val spType = SharedPreferenceType.of(convType)
         // <key>
-        val key = SetterDefVisitor.mTreeMaker.Ident(SetterDefVisitor.mNames.fromString("\"${param.key}\""))
+        val key = mTreeMaker.Literal(param.key)
         if (origType.supported()) {
             // editor.put[ConvT](<key>, <value>);
-            statement.append(
-                SetterDefVisitor.mTreeMaker.Exec(
-                spType.putStatement(key, SetterDefVisitor.mTreeMaker.Ident(value))
+            statement = statement.append(mTreeMaker.Exec(
+                mTreeMaker.Apply(
+                    List.nil(),
+                    mTreeMaker.Ident(mNames.fromString("put${spType.name}")),
+                    List.of(key, mTreeMaker.Ident(value))
+                )
             ))
         } else if (element.isEnum()) {
-            val name = SetterDefVisitor.mTreeMaker.Select(SetterDefVisitor.mTreeMaker.Ident(value), SetterDefVisitor.mNames._name)
-
-            element.accept(ImportDefVisitor, ImportDefVisitor.ClassPkgDef(
-                IllegalArgumentException::class.qualifiedName!!,
-                IllegalArgumentException::class.simpleName!!,
-            ))
+            val name = mTreeMaker.Select(mTreeMaker.Ident(value), mNames._name)
 
             // editor.put[ConvT](<key>, <value>.name());
-            statement.append(
-                SetterDefVisitor.mTreeMaker.Exec(
-                spType.putStatement(key, name)
+            statement = statement.append(mTreeMaker.Exec(
+                mTreeMaker.Apply(
+                    List.nil(),
+                    mTreeMaker.Ident(mNames.fromString("put${spType.name}")),
+                    List.of(key, mTreeMaker.Apply(
+                        List.nil(), name, List.nil()
+                    ))
+                )
             ))
         } else {
             origType as ClassName
-            val originClass = SetterDefVisitor.mTreeMaker.Select(
-                SetterDefVisitor.mTreeMaker.Ident(SetterDefVisitor.mNames.fromString(origType.simpleName())),
-                SetterDefVisitor.mNames._class
+            val originClass = mTreeMaker.Select(
+                TypeImpl(origType),
+                mNames._class
             )
 
-            val fromPref = SetterDefVisitor.mTreeMaker.Apply(
+            val fromPref = mTreeMaker.Apply(
                 List.nil(),
-                SetterDefVisitor.mTreeMaker.Select(
-                    SetterDefVisitor.mTreeMaker.Ident(SetterDefVisitor.mNames.fromString("ExConverters")),
-                    SetterDefVisitor.mNames.fromString("toPreference")
+                mTreeMaker.Select(
+                    TypeImpl(Types.Converters),
+                    mNames.fromString("toPreference")
                 ),
-                List.of(originClass, SetterDefVisitor.mTreeMaker.Ident(value))
+                List.of(originClass, mTreeMaker.Ident(value))
             )
             // editor.put[ConvT](<key>, ExConverters.fromPreference(OriginT.class, origin));
-            statement.append(
-                SetterDefVisitor.mTreeMaker.Exec(
-                spType.putStatement(key, fromPref)
+            statement = statement.append(mTreeMaker.Exec(
+                mTreeMaker.Apply(
+                    List.nil(),
+                    mTreeMaker.Ident(mNames.fromString("put${spType.name}")),
+                    List.of(key, fromPref)
+                )
             ))
         }
 
         // return this;
-        statement.append(mTreeMaker.Return(
+        statement = statement.append(mTreeMaker.Return(
             mTreeMaker.Ident(mNames._this)
         ))
 
         return mTreeMaker.MethodDef(
-            mTreeMaker.Modifiers(Flags.PUBLIC, Flags.FINAL),
+            mTreeMaker.MethodModifiers(Flags.PUBLIC, Flags.FINAL),
             mNames.fromString(element.setterName()),
-            mTreeMaker.Ident(mNames.fromString(EditorDefVisitor.Editor)),
+            TypeImpl(Types.PrefEditor),
+//            mTreeMaker.Ident(mNames.fromString("SpEditor")),
             List.nil(),
             List.of(mTreeMaker.VarDef(
-                mTreeMaker.Modifiers(),
+                mTreeMaker.ParamModifiers(),
                 value,
-                mTreeMaker.Ident(mNames.fromString(origType.toString())),
+                TypeImpl(origType),
                 null
             )),
             List.nil(),

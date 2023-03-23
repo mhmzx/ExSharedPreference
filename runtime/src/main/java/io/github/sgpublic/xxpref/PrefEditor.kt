@@ -3,17 +3,12 @@ package io.github.sgpublic.xxpref
 import android.content.SharedPreferences
 import java.io.Closeable
 
-/**
- *
- * @author Madray Haven
- * @date 2022/11/30 9:42
- */
-abstract class SpEditor(
+abstract class PrefEditor(
     private var editorRef: SharedPreferences.Editor?
 ): Closeable {
     private val editor: SharedPreferences.Editor get() {
         editorRef?.let { return it }
-        throw ExspException("This editor has been saved, cannot continue editing!")
+        throw XXPrefException("This editor has been saved, cannot continue editing!")
     }
 
     protected fun putString(key: String, value: String) {

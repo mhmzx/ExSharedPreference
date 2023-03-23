@@ -5,10 +5,11 @@ package io.github.sgpublic.xxpref.util
 import com.squareup.javapoet.ClassName
 import com.squareup.javapoet.TypeName
 import com.sun.tools.javac.tree.JCTree.JCExpression
-import io.github.sgpublic.xxpref.XXPrefProcessor
-import io.github.sgpublic.xxpref.XXPrefProcessor.Companion.mNames
-import io.github.sgpublic.xxpref.XXPrefProcessor.Companion.mTreeMaker
+import io.github.sgpublic.xxpref.jc.TypeElementImpl
+import io.github.sgpublic.xxpref.jc.mNames
+import io.github.sgpublic.xxpref.jc.mTreeMaker
 import java.util.*
+import com.sun.tools.javac.util.Name
 import javax.lang.model.element.VariableElement
 
 fun HashSet<TypeName>.andBoxed(): HashSet<TypeName> {
@@ -32,18 +33,23 @@ val StringTypeOrigin: ClassName = ClassName.get("java.lang", "String")
 private val BooleanType = hashSetOf(
     ClassName.BOOLEAN
 ).andBoxed()
+val TypeName.isBoolean get() = BooleanType.contains(this)
 private val IntType = hashSetOf(
     ClassName.INT
 ).andBoxed()
+val TypeName.isInt get() = IntType.contains(this)
 private val LongType = hashSetOf(
     ClassName.LONG
 ).andBoxed()
+val TypeName.isLong get() = LongType.contains(this)
 private val FloatType = hashSetOf(
     ClassName.FLOAT
 ).andBoxed()
+val TypeName.isFloat get() = FloatType.contains(this)
 private val StringType = hashSetOf(
     StringTypeOrigin
 )
+val TypeName.isString get() = StringType.contains(this)
 
 
 private val supported = hashSetOf(
@@ -75,10 +81,10 @@ fun VariableElement.setterName(): String {
     return "set$name"
 }
 
-private val obj = XXPrefProcessor.getElement("java.lang.Object")
-private val enu = XXPrefProcessor.getElement("java.lang.Enum")
+private val obj = TypeElementImpl("java.lang.Object")
+private val enu = TypeElementImpl("java.lang.Enum")
 fun VariableElement.isEnum(): Boolean {
-    var asElement = XXPrefProcessor.asElement(asType()) ?: return false
+    var asElement = TypeElementImpl(asType()) ?: return false
     while (asElement.superclass != null) {
         if (asElement == enu) {
             return true
@@ -86,7 +92,7 @@ fun VariableElement.isEnum(): Boolean {
         if (asElement == obj) {
             break
         }
-        asElement = XXPrefProcessor.asElement(asElement.superclass) ?: break
+        asElement = TypeElementImpl(asElement.superclass) ?: break
     }
     return false
 }
@@ -105,11 +111,11 @@ enum class SharedPreferenceType {
         )
     }
 
-    fun putStatement(key: JCExpression, value: JCExpression): JCExpression {
+    fun putStatement(target: Name, key: JCExpression, value: JCExpression): JCExpression {
         return mTreeMaker.Apply(
             com.sun.tools.javac.util.List.nil(),
             mTreeMaker.Select(
-                mTreeMaker.Ident(mNames.fromString("editor")),
+                mTreeMaker.Ident(target),
                 mNames.fromString("put${name}")
             ),
             com.sun.tools.javac.util.List.of(key, value)

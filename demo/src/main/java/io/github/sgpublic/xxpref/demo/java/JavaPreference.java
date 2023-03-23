@@ -2,9 +2,8 @@ package io.github.sgpublic.xxpref.demo.java;
 
 import java.util.Date;
 
-import io.github.sgpublic.xxpref.annotations.XXPreference;
 import io.github.sgpublic.xxpref.annotations.PrefVal;
-
+import io.github.sgpublic.xxpref.annotations.XXPreference;
 @XXPreference(name = "name_of_shared_preference")
 public class JavaPreference {
     @PrefVal(defVal = "test")
