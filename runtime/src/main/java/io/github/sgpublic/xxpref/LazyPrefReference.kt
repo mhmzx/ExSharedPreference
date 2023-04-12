@@ -5,7 +5,7 @@ import android.content.SharedPreferences
 import io.github.sgpublic.xxpref.interfaces.SharedPreferenceListener
 
 class LazyPrefReference internal constructor(
-    private val context: Context,
+    private val context: () -> Context,
     private val name: String,
     private val mode: Int,
 ): SharedPreferences.OnSharedPreferenceChangeListener, Lazy<SharedPreferences> {
@@ -15,7 +15,7 @@ class LazyPrefReference internal constructor(
         sp?.let { return it }
         synchronized(this) {
             sp?.let { return it }
-            sp = context.getSharedPreferences(name, mode)
+            sp = context.invoke().getSharedPreferences(name, mode)
             sp?.registerOnSharedPreferenceChangeListener(this)
             return sp!!
         }
@@ -50,17 +50,16 @@ class LazyPrefReference internal constructor(
         }
     }
 
-    fun get(key: String, defVal: Any) {
-        this.value.let {
-            when (defVal) {
-                is String -> it.getString(key, defVal)
-                is Int -> it.getInt(key, defVal)
-                is Float -> it.getFloat(key, defVal)
-                is Boolean -> it.getBoolean(key, defVal)
-                is Long -> it.getLong(key, defVal)
-                else -> throw XXPrefException("Unsupport type: ${defVal.javaClass}")
-            }
-        }
+    fun <T: Any> get(key: String, defVal: T): T {
+        @Suppress("UNCHECKED_CAST")
+        return when (defVal) {
+            is String -> value.getString(key, defVal)!!
+            is Int -> value.getInt(key, defVal)
+            is Float -> value.getFloat(key, defVal)
+            is Boolean -> value.getBoolean(key, defVal)
+            is Long -> value.getLong(key, defVal)
+            else -> throw XXPrefException("Unsupported type: ${defVal.javaClass}")
+        } as T
     }
 
 

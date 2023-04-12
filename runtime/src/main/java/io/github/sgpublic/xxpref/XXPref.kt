@@ -4,11 +4,11 @@ import android.content.Context
 import java.lang.ref.WeakReference
 
 object XXPref {
-    private var context: WeakReference<Context>? = null
+    private var context: (() -> Context)? = null
 
     @JvmStatic
-    fun init(context: Context) {
-        this.context = WeakReference(context)
+    fun init(context: () -> Context) {
+        this.context = context
     }
 
     @JvmStatic
@@ -16,6 +16,6 @@ object XXPref {
         return LazyPrefReference(requiredContext(), name, mode)
     }
 
-    private fun requiredContext() = context?.get()
-        ?: throw IllegalStateException("Context are not initialized, did you call ExPreference.init(context)?")
+    private fun requiredContext() = context
+        ?: throw IllegalStateException("Context are not initialized, did you call ExPreference.init(() -> Context)?")
 }
