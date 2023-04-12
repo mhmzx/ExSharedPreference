@@ -7,7 +7,7 @@ plugins {
     id("kotlin-kapt")
     id("maven-publish")
     id("signing")
-    id("xxpref-java-publish")
+    id("io.github.sgpublic.java-publish")
 }
 
 java {

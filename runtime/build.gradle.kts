@@ -4,7 +4,7 @@ plugins {
 
     id("maven-publish")
     id("signing")
-    id("xxpref-android-publish")
+    id("io.github.sgpublic.android-publish")
 }
 
 android {
