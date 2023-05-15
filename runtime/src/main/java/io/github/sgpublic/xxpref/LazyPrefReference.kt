@@ -44,6 +44,7 @@ class LazyPrefReference internal constructor(
                 is Float -> it.putFloat(key, value)
                 is Boolean -> it.putBoolean(key, value)
                 is Long -> it.putLong(key, value)
+                is Enum<*> -> it.putString(key, value.name)
                 else -> throw XXPrefException("Unsupport type: ${value.javaClass}")
             }
             it.apply()
@@ -58,6 +59,8 @@ class LazyPrefReference internal constructor(
             is Float -> value.getFloat(key, defVal)
             is Boolean -> value.getBoolean(key, defVal)
             is Long -> value.getLong(key, defVal)
+            is Enum<*> -> defVal.javaClass.getMethod("valueOf", String::class.java)
+                .invoke(null, value.getString(key, defVal.name))
             else -> throw XXPrefException("Unsupported type: ${defVal.javaClass}")
         } as T
     }
