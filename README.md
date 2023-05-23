@@ -1,12 +1,12 @@
-# ExSharedPreference
+# XXPreference
 
-![Maven Central](https://img.shields.io/maven-central/v/io.github.sgpublic/exsp-compiler)
+![Maven Central](https://img.shields.io/maven-central/v/io.github.sgpublic/xxpref-compiler)
 
 This is a wrapper library for `SharedPreferences` for Android, based on Lombok (with `@Data` annotation), which allows you to manage `SharedPreferences` more elegantly.
 
 ## Quick start
 
-1. If your project uses Java, you need to install the `ExSharedPreference` plugin for your Android Studio, projects using kotlin do not need to complete this step.
+1. If your project uses Java, you need to install the `XXPreference` plugin for your Android Studio, projects using kotlin do not need to complete this step.
 
 2. Add dependencies in `build.gradle`.
 
@@ -14,9 +14,9 @@ This is a wrapper library for `SharedPreferences` for Android, based on Lombok (
 
      ```groovy
      dependencies {
-         implementation "io.github.sgpublic:exsp-common:$latest"
-         implementation "io.github.sgpublic:exsp-runtime:$latest"
-         annotationProcessor "io.github.sgpublic:exsp-compiler-java:$latest"
+         implementation "io.github.sgpublic:xxpref-common:$latest"
+         implementation "io.github.sgpublic:xxpref-runtime:$latest"
+         annotationProcessor "io.github.sgpublic:xxpref-compiler-java:$latest"
      }
      ```
      
@@ -28,18 +28,18 @@ This is a wrapper library for `SharedPreferences` for Android, based on Lombok (
      }
      
      dependencies {
-         implementation("io.github.sgpublic:exsp-common:$latest")
-         implementation("io.github.sgpublic:exsp-runtime:$latest")
-         ksp("io.github.sgpublic:exsp-compiler-kotlin:$latest")
+         implementation("io.github.sgpublic:xxpref-common:$latest")
+         implementation("io.github.sgpublic:xxpref-runtime:$latest")
+         ksp("io.github.sgpublic:xxpref-compiler-kotlin:$latest")
      }
      ```
    
-3. Create a new class for managing `SharedPreferences`, and add `@ExSharedPreference` annotations.
+3. Create a new class for managing `SharedPreferences`, and add `@XXPreference` annotations.
 
    + Java
 
      ```java
-     @ExSharedPreference(name = "test")
+     @XXPreference(name = "test")
      public class TestPreference {
      }
      ```
@@ -47,36 +47,36 @@ This is a wrapper library for `SharedPreferences` for Android, based on Lombok (
    + Kotlin
    
      ```kotlin
-     @ExSharedPreference(name = "test")
+     @XXPreference(name = "test")
      interface TestPreference {
      }
      ```
    
      
    
-4. Add member variables to this class and add the `@ExValue` annotation to set the default value.
+4. Add member variables to this class and add the `@PrefVal` annotation to set the default value.
 
    + Java
    
      ```java
-     @ExSharedPreference(name = "name_of_shared_preference")
+     @XXPreference(name = "name_of_shared_preference")
      public class TestPreference {
-         @ExValue(defVal = "test")
+         @PrefVal(defVal = "test")
          private String testString;
      
-         @ExValue(defVal = "0")
+         @PrefVal(defVal = "0")
          private float testFloat;
      
-         @ExValue(defVal = "0")
+         @PrefVal(defVal = "0")
          private int testInt;
      
-         @ExValue(defVal = "0")
+         @PrefVal(defVal = "0")
          private long testLong;
      
-         @ExValue(defVal = "false")
+         @PrefVal(defVal = "false")
          private boolean testBool;
      
-         @ExValue(defVal = "TYPE_A")
+         @PrefVal(defVal = "TYPE_A")
          private Type testEnum;
      
          public enum Type {
@@ -88,24 +88,24 @@ This is a wrapper library for `SharedPreferences` for Android, based on Lombok (
    + Kotlin
    
      ```kotlin
-     @ExSharedPreference(name = "name_of_shared_preference")
+     @XXPreference(name = "name_of_shared_preference")
      interface TestPreference {
-         @ExValue(defVal = "test")
+         @PrefVal(defVal = "test")
          var testString: String
      
-         @ExValue(defVal = "0")
+         @PrefVal(defVal = "0")
          var testFloat: Float
      
-         @ExValue(defVal = "0")
+         @PrefVal(defVal = "0")
          var testInt: Int
      
-         @ExValue(defVal = "0")
+         @PrefVal(defVal = "0")
          var testLong: Long
      
-         @ExValue(defVal = "false")
+         @PrefVal(defVal = "false")
          var testBool: Boolean
      
-         @ExValue(defVal = "TYPE_A")
+         @PrefVal(defVal = "TYPE_A")
          var testEnum: Type
      
          enum class Type {
@@ -154,7 +154,7 @@ This is a wrapper library for `SharedPreferences` for Android, based on Lombok (
 
 ## Custom Type
 
-`ExSharedPreference` allows you to save custom types into SharedPreferences, but since SharedPreferences only supports a limited number of types, we use the `Converter<OriginT, TargetT>` to complete this function.
+`XXPreference` allows you to save custom types into SharedPreferences, but since SharedPreferences only supports a limited number of types, we use the `Converter<OriginT, TargetT>` to complete this function.
 
 **PS: We've added special support for enum types, so you don't need to add converters for enum types.**
 
@@ -163,19 +163,19 @@ This is a wrapper library for `SharedPreferences` for Android, based on Lombok (
    **Note: The `defVal` needs to fill in the string of the original type value, not your custom type!**
 
    ```java
-   @ExSharedPreference(name = "name_of_shared_preference")
+   @XXPreference(name = "name_of_shared_preference")
    interface TestPreference {
        ...
-       @ExValue(defVal = "-1")
+       @PrefVal(defVal = "-1")
        var testDate: Date
        ...
    }
    ```
    
-2. Create a class that implements the Converter interface and add `@ExConverter` annotation.
+2. Create a class that implements the Converter interface and add `@PrefConverter` annotation.
 
    ```kotlin
-   @ExConverter
+   @PrefConverter
    class DateConverter: Converter<Date, Long> {
        override fun toPreference(origin: Date): Long {
            return origin.time
@@ -191,18 +191,18 @@ This is a wrapper library for `SharedPreferences` for Android, based on Lombok (
 
 ## Demo
 
-We have a demo using `Kotlin` to demonstrate how `ExSharedPreference` used: [demo-kotlin](/demo/src/main/java/io/github/sgpublic/exsp/demo).
+We have a demo using `Kotlin` to demonstrate how `XXPreference` used: [demo-kotlin](/demo/src/main/java/io/github/sgpublic/xxpref/demo).
 
 ## API
 
-### @ExSharedPreference
+### @XXPreference
 
 This annotation is used to create a `SharedPreferences` whose parameters correspond to the `Context#getSharedPreferences(String name, int mode)` method.
 
 That is, the following annotation:
 
 ```java
-@ExSharedPreference(name = "name_of_shared_preference", mode = Context.MODE_PRIVATE)
+@XXPreference(name = "name_of_shared_preference", mode = Context.MODE_PRIVATE)
 ```
 
 means the following statement:
@@ -221,14 +221,14 @@ SharedPreferences sharedPreference = context.getSharedPreference("name_of_shared
 
   **(Optional)** Operating mode, default is `Context.MODE_PRIVATE`.
 
-### @ExValue
+### @PrefVal
 
 This annotation is used to mark a `SharedPreference` key whose parameters correspond to the `getXxxx` methods of class `android.content.SharedPreferences`.
 
 That is, the following annotation:
 
 ```java
-@ExValue(name = "test_string", defVal = "default value")
+@PrefVal(name = "test_string", defVal = "default value")
 private String testString;
 ```
 
@@ -253,6 +253,6 @@ sharedPreference.editor()
 
   **(Required)** Value to return if this preference does not exist.
 
-### @ExConverter
+### @PrefConverter
 
-This annotation is used to mark a custom type converter for `ExSharedPreference` processing.
+This annotation is used to mark a custom type converter for `XXPreference` processing.
