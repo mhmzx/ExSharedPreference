@@ -4,6 +4,7 @@ pluginManagement {
     repositories {
         gradlePluginPortal()
         google()
+        mavenLocal()
         mavenCentral()
         maven("https://jitpack.io")
     }
@@ -13,6 +14,7 @@ dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
         google()
+        mavenLocal()
         mavenCentral()
         maven("https://jitpack.io")
     }

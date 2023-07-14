@@ -10,7 +10,6 @@ plugins {
 android {
     namespace = "io.github.sgpublic.xxpref"
     compileSdk = 33
-    buildToolsVersion = "33.0.0"
 
     publishing {
         singleVariant("release") {
@@ -47,7 +46,7 @@ dependencies {
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
 
     // https://mvnrepository.com/artifact/androidx.lifecycle/lifecycle-livedata-core
-    implementation("androidx.lifecycle:lifecycle-livedata-core:2.2.0")
+    implementation("androidx.lifecycle:lifecycle-livedata-core:2.5.1")
 
     implementation(project(":common"))
 }
