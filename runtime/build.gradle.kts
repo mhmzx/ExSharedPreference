@@ -47,7 +47,7 @@ dependencies {
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
 
     // https://mvnrepository.com/artifact/androidx.lifecycle/lifecycle-livedata-core
-    api("androidx.lifecycle:lifecycle-livedata-core:2.6.0")
+    implementation("androidx.lifecycle:lifecycle-livedata-core:2.2.0")
 
     implementation(project(":common"))
 }
