@@ -4,7 +4,6 @@ plugins {
     kotlin("jvm")
 
     id("java-library")
-    id("kotlin-kapt")
     id("maven-publish")
     id("signing")
 

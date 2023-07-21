@@ -26,10 +26,8 @@ dependencies {
 
     implementation(project(":common"))
 
-//    // https://kotlinlang.org/docs/ksp-quickstart.html#create-a-processor-of-your-own
-//    implementation("com.google.devtools.ksp:symbol-processing-api:1.8.10-1.0.9")
-    kotlin("gradle-plugin-api", Deps.Kotlin)
-    kotlin("compiler-embeddable", Deps.Kotlin)
+    // https://kotlinlang.org/docs/ksp-quickstart.html#create-a-processor-of-your-own
+    implementation("com.google.devtools.ksp:symbol-processing-api:${Deps.Ksp}")
 
     // https://mvnrepository.com/artifact/com.squareup/kotlinpoet
     implementation("com.squareup:kotlinpoet:1.12.0")
