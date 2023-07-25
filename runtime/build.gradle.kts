@@ -9,7 +9,7 @@ plugins {
 
 android {
     namespace = "io.github.sgpublic.xxpref"
-    compileSdk = 33
+    compileSdk = 30
 
     publishing {
         singleVariant("release") {
@@ -20,7 +20,6 @@ android {
 
     defaultConfig {
         minSdk = 16
-        targetSdk = 33
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
@@ -46,7 +45,7 @@ dependencies {
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
 
     // https://mvnrepository.com/artifact/androidx.lifecycle/lifecycle-livedata-core
-    implementation("androidx.lifecycle:lifecycle-livedata-core:2.5.1")
+    implementation("androidx.lifecycle:lifecycle-livedata-core:2.3.1")
 
     implementation(project(":common"))
 }
